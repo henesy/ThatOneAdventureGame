@@ -19,3 +19,14 @@ func printRoom() {
         clear(extra)
     }
 }
+
+/* broken */
+func printRoomB(loc int) {
+    for i:=0;i<22;i+=1 {
+        for h:=0;h<79;i+=1 {
+            fmt.Printf("%s", roomb[loc][i][h])
+            extra = 80
+            clear(extra)
+        }
+    }
+}
