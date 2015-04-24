@@ -9,12 +9,14 @@ import (
 /* terminal height and width */
 const height = 24
 const width = 80
+var curroom = make([]string, 24)
+var extra int
+var dir string
 
 func main() {
 	var b []byte = make([]byte, 1)
-    var extra int
-    var dir string
     clear(0)
+    setRoom("1")
     for ;string([]byte(b)[0]) != "q"; {
         os.Stdin.Read(b)
         char := string([]byte(b)[0])
@@ -28,10 +30,12 @@ func main() {
             case "s":
                 dir="Down"
             default:
-                fmt.Printf("%s", char)
+                dir=char
         }
         fmt.Print(dir)
         extra = utf8.RuneCountInString(dir)
         clear(extra)
     }
+    /* testing printing a room */
+    printRoom()
 }
