@@ -43,36 +43,45 @@ func main() {
             case "a":
                 dir="Left"
                 placeCharacter(pos.x, pos.y, fill)
-                if (pos.x - 1) < 0 {
+                fut := pos.x - 1
+                //checkBarricades(dir)
+                if (fut) < 0 || safeMove == false {
                     pos.x = pos.x
                 } else {
-                    pos.x = pos.x - 1
+                    pos.x = fut
                 }
             case "d":
                 dir="Right"
                 placeCharacter(pos.x, pos.y, fill)
-                if (pos.x + 1) > 79 {
+                fut := pos.x + 1
+                //checkBarricades(dir)
+                if (fut) > 79 || safeMove == false {
                     pos.x = pos.x
                 } else {
-                    pos.x = pos.x + 1
+                    pos.x = fut
                 }
             case "w":
                 dir="Up"
                 placeCharacter(pos.x, pos.y, fill)
-                if (pos.y - 1) < 0 {
+                fut := pos.y - 1
+                //checkBarricades(dir)
+                if (fut) < 0 || safeMove == false {
                     pos.y = pos.y
                 } else {
-                    pos.y = pos.y - 1
+                    pos.y = fut
                 }
             case "s":
                 dir="Down"
                 placeCharacter(pos.x, pos.y, fill)
-                if (pos.y + 1) > 22 {
+                fut := pos.y + 1
+                //checkBarricades(dir)
+                if (fut) > 22 || safeMove == false {
                     pos.y = pos.y
                 } else {
-                    pos.y = pos.y + 1
+                    pos.y = fut
                 }
             default:
+                placeCharacter(pos.x, pos.y, fill)
                 dir=char
         }
         fmt.Print(dir)

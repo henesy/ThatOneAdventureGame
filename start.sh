@@ -1,6 +1,6 @@
 #!/bin/bash
 #./src/cpsvi
-go build
+#go build
 stty raw
 ./ThatOneAdventureGame
 stty cooked
