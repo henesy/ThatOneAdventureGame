@@ -33,3 +33,41 @@ func copyRoom(num string) {
         }
     }
 }
+
+func placeCharacter_old() {
+    var buf = make([]string, 81)
+    var inserted string = ""
+    up := pos.y
+    side := pos.x
+    line := curroom[up]
+    for i:=0;len(curroom[up]) > 0;i+=1 {
+        letter, size := utf8.DecodeRuneInString(line)
+        buf[i] = sc.QuoteRune(letter)
+        line = line[size:]
+    }
+    buf[side] = sc.QuoteRune(icon)
+    for h:=0;h<len(buf);h+=1 {
+        inserted = inserted + buf[h]
+    }
+    curroom[up] = inserted
+}
+
+/* need to set what was under player to var fill rune */
+func placeCharacter(x, y int, pic rune) {
+    str := curroom[y]
+    var newstr string = ""
+
+	for i:=0;len(str) > 0;i+=1 {
+        character, size := utf8.DecodeRuneInString(str)
+		str = str[size:]
+        if i == x {
+            fill=character
+            letter, _ := sc.Unquote(sc.QuoteRune(pic))
+            newstr = newstr + letter
+        } else {
+            letter, _ := sc.Unquote(sc.QuoteRune(character))
+            newstr = newstr + letter
+        }
+	}
+    curroom[y] = newstr
+}

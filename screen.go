@@ -6,7 +6,7 @@ import (
 )
 
 func clear(extra int) {
-    for i:=0;i<(80-extra);i+=1 {
+    for i:=0;i<(width-extra);i+=1 {
         fmt.Print(" ")
     }
 }
