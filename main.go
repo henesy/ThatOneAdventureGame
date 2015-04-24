@@ -9,7 +9,7 @@ import (
 /* terminal height and width */
 const height = 24
 const width = 80
-var curroom = make([]string, 24)
+var curroom = make([]string, 23)
 var extra int
 var dir string
 
