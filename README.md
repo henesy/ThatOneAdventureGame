@@ -1,6 +1,9 @@
 # ThatOneAdventureGame
 >\>ISHYGDDT
 
+## Summary:
+A game made in the spirit of preceding styles such as `nethack` and `rogue`.
+
 ## Requirements:
 - Golang 1.4.x
 - `stty` command (Unix-based OS)
