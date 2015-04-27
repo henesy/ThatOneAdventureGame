@@ -52,7 +52,14 @@ func copyRoom(num string) {
 func placeCharacter(x, y int, pic rune) {
     str := curroom[y]
     var newstr string = ""
+    //var clearL, clearR, clearU, clearD bool
+    var posL, posR, posU, posD int
+    posL = pos.x -1
+    posR = pos.x +1
+    posU = pos.y -1
+    posD = pos.y +1
 
+    /* take care of character placement */
 	for i:=0;len(str) > 0;i+=1 {
         character, size := utf8.DecodeRuneInString(str)
 		str = str[size:]
@@ -67,6 +74,62 @@ func placeCharacter(x, y int, pic rune) {
         }
 	}
     curroom[y] = newstr
+    /* scan upper line for fillU */
+    if posU < 0 {
+        fillU='⚠'
+    } else {
+        str=curroom[posU]
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+    		str = str[size:]
+            //findBarricades(x, y, character)
+            if i == pos.x {
+                fillU=character
+            }
+        }
+    }
+    /* scan lower line for fillD */
+    if posD > 22 {
+        fillD = '⚠'
+    } else {
+        str=curroom[posD]
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+            str = str[size:]
+            //findBarricades(x, y, character)
+            if i == pos.x {
+                fillD=character
+            }
+        }
+    }
+    /* scan same line for right character */
+    str=curroom[y]
+    if posR > 79 {
+        fillR = '⚠'
+    } else {
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+            str = str[size:]
+            //findBarricades(x, y, character)
+            if i == posR {
+                fillR=character
+            }
+        }
+    }
+    /* scan same line for left character */
+    str=curroom[y]
+    if posL < 0 {
+        fillL = '⚠'
+    } else {
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+            str = str[size:]
+            //findBarricades(x, y, character)
+            if i == posL {
+                fillL=character
+            }
+        }
+    }
 }
 
 

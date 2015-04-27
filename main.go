@@ -20,6 +20,7 @@ var pos position
 var icon rune = '👱'
 var fill rune = ' '
 //👳
+var fillU, fillD, fillL, fillR rune
 
 var extra int
 var dir string
@@ -35,8 +36,9 @@ func main() {
         printRoom()
         //fmt.Print("User Stats:")
         //clear(11)
-        fmt.Printf("Position: %2d,%2d", pos.x, pos.y)
-        clear(15)
+        fmt.Printf("Position: %2d,%2d; UDRL: %c,%c,%c,%c", pos.x, pos.y, fillU, fillD, fillR, fillL)
+        //clear(15) //without "; Fills: ..."
+        clear(30)
         os.Stdin.Read(b)
         char := string([]byte(b)[0])
         switch char {
