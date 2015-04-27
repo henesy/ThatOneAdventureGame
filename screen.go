@@ -5,6 +5,17 @@ import (
     "unicode/utf8"
 )
 
+/* superceded by utf8.RuneCountInString(words) */
+func lenString(str string)(num int) {
+    for i:=0;len(str) > 0;i+=1 {
+        _, size := utf8.DecodeRuneInString(str)
+        str = str[size:]
+        //findBarricades(x, y, character)
+        num=i
+    }
+    return
+}
+
 func clear(extra int) {
     for i:=0;i<(width-extra);i+=1 {
         fmt.Print(" ")

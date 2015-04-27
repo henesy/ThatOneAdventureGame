@@ -7,11 +7,11 @@ import (
 sc  "strconv"
 )
 
-var barricadesX = make([]int, 1920)
-var freeX int = 0
-var barricadesY = make([]int, 1920)
-var freeY int = 0
-// default to -1
+/* end list in a comma */
+/* var barricades = []rune{
+    '═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
+     '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬'
+} */
 
 var safeMove bool = true
 
@@ -23,13 +23,6 @@ func setRoom(num string) {
     }
     for h:=0;h<23;h+=1 {
         curroom[h]=room[h]
-    }
-    //wipe out barricades
-    for i:=0;i<len(barricadesX);i+=1 {
-        barricadesX[i] = (-1)
-    }
-    for i:=0;i<len(barricadesY);i+=1 {
-        barricadesY[i] = (-1)
     }
 }
 
@@ -74,59 +67,62 @@ func placeCharacter(x, y int, pic rune) {
         }
 	}
     curroom[y] = newstr
-    /* scan upper line for fillU */
-    if posU < 0 {
-        fillU='⚠'
-    } else {
-        str=curroom[posU]
-        for i:=0;len(str) > 0;i+=1 {
-            character, size := utf8.DecodeRuneInString(str)
-    		str = str[size:]
-            //findBarricades(x, y, character)
-            if i == pos.x {
-                fillU=character
+
+    if pic == icon {
+        /* scan upper line for fillU */
+        if posU < 0 {
+            fillU='⚠'
+        } else {
+            str=curroom[posU]
+            for i:=0;len(str) > 0;i+=1 {
+                character, size := utf8.DecodeRuneInString(str)
+        		str = str[size:]
+                //findBarricades(x, y, character)
+                if i == pos.x {
+                    fillU=character
+                }
             }
         }
-    }
-    /* scan lower line for fillD */
-    if posD > 22 {
-        fillD = '⚠'
-    } else {
-        str=curroom[posD]
-        for i:=0;len(str) > 0;i+=1 {
-            character, size := utf8.DecodeRuneInString(str)
-            str = str[size:]
-            //findBarricades(x, y, character)
-            if i == pos.x {
-                fillD=character
+        /* scan lower line for fillD */
+        if posD > 22 {
+            fillD = '⚠'
+        } else {
+            str=curroom[posD]
+            for i:=0;len(str) > 0;i+=1 {
+                character, size := utf8.DecodeRuneInString(str)
+                str = str[size:]
+                //findBarricades(x, y, character)
+                if i == pos.x {
+                    fillD=character
+                }
             }
         }
-    }
-    /* scan same line for right character */
-    str=curroom[y]
-    if posR > 79 {
-        fillR = '⚠'
-    } else {
-        for i:=0;len(str) > 0;i+=1 {
-            character, size := utf8.DecodeRuneInString(str)
-            str = str[size:]
-            //findBarricades(x, y, character)
-            if i == posR {
-                fillR=character
+        /* scan same line for right character */
+        str=curroom[y]
+        if posR > 79 {
+            fillR = '⚠'
+        } else {
+            for i:=0;len(str) > 0;i+=1 {
+                character, size := utf8.DecodeRuneInString(str)
+                str = str[size:]
+                //findBarricades(x, y, character)
+                if i == posR {
+                    fillR=character
+                }
             }
         }
-    }
-    /* scan same line for left character */
-    str=curroom[y]
-    if posL < 0 {
-        fillL = '⚠'
-    } else {
-        for i:=0;len(str) > 0;i+=1 {
-            character, size := utf8.DecodeRuneInString(str)
-            str = str[size:]
-            //findBarricades(x, y, character)
-            if i == posL {
-                fillL=character
+        /* scan same line for left character */
+        str=curroom[y]
+        if posL < 0 {
+            fillL = '⚠'
+        } else {
+            for i:=0;len(str) > 0;i+=1 {
+                character, size := utf8.DecodeRuneInString(str)
+                str = str[size:]
+                //findBarricades(x, y, character)
+                if i == posL {
+                    fillL=character
+                }
             }
         }
     }
@@ -179,30 +175,53 @@ func findBarricades_old(char rune)(bool) {
     }
 }
 
-func checkBarricades_old(locX, locY int) {
-    for i:=0;i<len(barricadesX);i+=1 {
-        if barricadesX[i] == locX && barricadesY[i] == locY {
+func checkObstruction()(rune) {
+    /* use dir and fill? and for to scan */
+    barricades := []rune{'═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
+         '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬'}
+    var dir_fill rune
+
+    if dir == "Left" {
+        dir_fill = fillL
+    } else if dir == "Right" {
+        dir_fill = fillR
+    } else if dir == "Up" {
+        dir_fill = fillU
+    } else if dir == "Down" {
+        dir_fill = fillD
+    }
+
+    //inc := 0
+    for _, char:=range barricades {
+        //fmt.Printf("%c %c", dir_fill, barricades[i])
+        if dir_fill == char {
             safeMove = false
+            break
         } else {
             safeMove = true
         }
+        //fmt.Printf("%c, %c, %v", char, dir_fill, safeMove)
     }
+    return dir_fill
 }
 
-func placeCharacter_old() {
-    var buf = make([]string, 81)
-    var inserted string = ""
-    up := pos.y
-    side := pos.x
-    line := curroom[up]
-    for i:=0;len(curroom[up]) > 0;i+=1 {
-        letter, size := utf8.DecodeRuneInString(line)
-        buf[i] = sc.QuoteRune(letter)
-        line = line[size:]
-    }
-    buf[side] = sc.QuoteRune(icon)
-    for h:=0;h<len(buf);h+=1 {
-        inserted = inserted + buf[h]
-    }
-    curroom[up] = inserted
+func openDoors() {
+    if fillU == '-' {
+        placeCharacter(pos.x, pos.y-1, 'ˉ')
+        fillU = 'ˉ'
+        fill = ' '
+    } else if fillD == '-' {
+        placeCharacter(pos.x, pos.y+1, '_')
+        fillD = '_'
+        fill = ' '
+    } else if fillL == '|' {
+        placeCharacter(pos.x-1, pos.y, '\\')
+        fillL = '\\'
+        fill = ' '
+    } else if fillR == '|' {
+        placeCharacter(pos.x+1, pos.y, '/')
+        fillR = '/'
+        fill = ' '
+    } 
+
 }
