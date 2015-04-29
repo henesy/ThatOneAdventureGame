@@ -227,13 +227,13 @@ func main() {
                 }
                 placeRune(pos.x, pos.y, char.fill)
             default:
+                placeRune(pos.x, pos.y, char.fill)
 
         }
 
         char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon)
-
         printRoom()
-        fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c", pos.x, pos.y, char.fillU, char.fillL, char.fillD, char.fillR)
+        fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR)
         clearln(30)
         pos.x, pos.y = fut.x, fut.y
         }
