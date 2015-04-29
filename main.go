@@ -226,6 +226,30 @@ func main() {
 
                 }
                 placeRune(pos.x, pos.y, char.fill)
+            case "o":
+                if char.fillU == '-' {
+                    placeRune(pos.x,pos.y-1,'ˉ')
+                } else if char.fillU == 'ˉ' {
+                    placeRune(pos.x,pos.y-1,'-')
+                }
+                if char.fillL == '|' {
+                    placeRune(pos.x-1,pos.y,'\\')
+                } else if char.fillL == '\\' {
+                    placeRune(pos.x-1,pos.y,'|')
+                }
+                if char.fillD == '-' {
+                    placeRune(pos.x,pos.y+1,'_')
+                } else if char.fillD == '_' {
+                    placeRune(pos.x,pos.y+1,'-')
+                }
+                if char.fillR == '|' {
+                    placeRune(pos.x+1,pos.y,'/')
+                } else if char.fillR == '/' {
+                    placeRune(pos.x+1,pos.y,'|')
+                }
+
+                /* every case: must have this placeRune() line */
+                placeRune(pos.x, pos.y, char.fill)
             default:
                 placeRune(pos.x, pos.y, char.fill)
 
