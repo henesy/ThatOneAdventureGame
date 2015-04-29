@@ -7,13 +7,34 @@ import (
     "unicode/utf8"
     "flag"
 sc  "strconv"
+    "golang.org/x/crypto/ssh/terminal"
 )
 
 type position struct {
     x int
     y int
 }
+/*
+type model interface {
+    MoveUp()(int, int)
+    MoveDown()(int, int)
+    MoveLeft()(int, int)
+    MoveRight()(int, int)
+}
 
+func (p position) moveUp()(int, int) {
+    return p.x, p.y-1
+}
+func (p position) moveDown()(int, int) {
+    return p.x, p.y+1
+}
+func (p position) moveLeft()(int, int) {
+    return p.x-1, p.y
+}
+func (p position) moveRight()(int, int) {
+    return p.x+1, p.y
+}
+*/
 type fillers struct {
     icon rune
     fill rune
@@ -23,10 +44,16 @@ type fillers struct {
     fillR rune
 }
 
+type sprite struct {
+    p position
+    f fillers
+}
+
 var height, width int /* terminal height/width */
 var curroom = make([]string, 23)
 var pos, fut position
 var char fillers
+var debugmode bool = false
 /* end variables */
 
 /* clears a line of the screen */
@@ -42,6 +69,12 @@ func clearscrn() {
         for i:=0;i<width;i+=1 {
             fmt.Print(" ")
         }
+    }
+}
+
+func clearnum(num int) {
+    for i:=0;i<num;i+=1 {
+        fmt.Print(" ")
     }
 }
 
@@ -87,7 +120,6 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
 
     /* check for edge of the map */
     posU, posL, posD, posR := (fut.y -1), (fut.x -1), (fut.y +1), (fut.x +1)
-
     if posU < 0 {
         fU='⚠'
     } else {
@@ -95,7 +127,7 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
     		str = str[size:]
-            if i == pos.x {
+            if i == fut.x {
                 fU=character
             }
         }
@@ -108,7 +140,7 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
             str = str[size:]
-            if i == pos.x {
+            if i == fut.x {
                 fD=character
             }
         }
@@ -167,12 +199,17 @@ func check(x, y int, aga rune)(occ bool) {
 }
 
 
+
 func main() {
+    var icon_string string
+    flag.StringVar(&icon_string, "icon", "👱", "Set unicode character to use as player icon")
     flag.IntVar(&height, "height", 24, "Set height of terminal screen [24]")
     flag.IntVar(&width, "width", 80, "Set width of terminal screen [80]")
     flag.Parse()
-
-    char.icon, char.fill = '👱', ' '
+    oldState, _ := terminal.MakeRaw(0)
+    defer terminal.Restore(0, oldState)
+    char.icon, _ = utf8.DecodeRuneInString(icon_string)
+    char.fill = ' '
     var b []byte = make([]byte, 1)
     clearln(0)
     setRoom("1")
@@ -197,7 +234,6 @@ func main() {
                     }
 
                 }
-                placeRune(pos.x, pos.y, char.fill)
             case "a":
                 if char.fillL != '⚠' && (check(pos.x-1, pos.y, char.fillL) == false){
                     fut.x -=1
@@ -206,7 +242,6 @@ func main() {
                     }
 
                 }
-                placeRune(pos.x, pos.y, char.fill)
             case "s":
                 if char.fillD != '⚠' && (check(pos.x, pos.y+1, char.fillD) == false){
                     fut.y +=1
@@ -215,8 +250,6 @@ func main() {
                     }
 
                 }
-                placeRune(pos.x, pos.y, char.fill)
-
             case "d":
                 if char.fillR != '⚠' && (check(pos.x+1, pos.y, char.fillR) == false){
                     fut.x +=1
@@ -225,8 +258,8 @@ func main() {
                     }
 
                 }
-                placeRune(pos.x, pos.y, char.fill)
             case "o":
+                /* open doors */
                 if char.fillU == '-' {
                     placeRune(pos.x,pos.y-1,'ˉ')
                 } else if char.fillU == 'ˉ' {
@@ -247,18 +280,32 @@ func main() {
                 } else if char.fillR == '/' {
                     placeRune(pos.x+1,pos.y,'|')
                 }
-
-                /* every case: must have this placeRune() line */
-                placeRune(pos.x, pos.y, char.fill)
+            case "i":
+                /* read inventory */
+                clearscrn()
+                fmt.Scanln()
+            case "D":
+                /* debug mode */
+                if debugmode == false {
+                    debugmode = true
+                } else {
+                    debugmode = false
+                }
             default:
-                placeRune(pos.x, pos.y, char.fill)
 
         }
+        placeRune(pos.x, pos.y, char.fill)
 
         char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon)
         printRoom()
-        fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR)
-        clearln(30)
+        if s:=utf8.RuneCountInString(usrin); debugmode == false {
+            fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR)
+            clearln(30)
+        } else {
+            fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR, usrin)
+            clearln(30+7+s)
+        }
+
         pos.x, pos.y = fut.x, fut.y
         }
 

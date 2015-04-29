@@ -6,12 +6,13 @@ A game made in the spirit of preceding styles such as `nethack` and `rogue`.
 
 ## Requirements:
 - Golang 1.4.x
-- `stty` command (Unix-based OS)
+- A Unix-based terminal emulator (or Unix-based OS)
+- Go's x/crypto/ssh/terminal package (`go get golang.org/x/crypto/ssh/terminal`)
 
 ## To Install:
-- `go build` in ThatOneAdventureGame's directory
 - `./src/cpsvi` in ThatOneAdventureGame's directory
+- `go build` in ThatOneAdventureGame's directory
 
 ## To Play:
-`./start.sh` in ThatOneAdventureGame's directory
+`./ThatOneAdventureGame` in ThatOneAdventureGame's directory
 
