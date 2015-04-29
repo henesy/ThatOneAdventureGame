@@ -8,6 +8,7 @@ import (
     "flag"
 sc  "strconv"
     "golang.org/x/crypto/ssh/terminal"
+    "strings"
 )
 
 type position struct {
@@ -44,15 +45,26 @@ type fillers struct {
     fillR rune
 }
 
+type statistics struct {
+    hlth int
+    atk int
+    dfs int
+}
+
 type sprite struct {
     p position
     f fillers
+    s statistics
 }
 
 var height, width int /* terminal height/width */
 var curroom = make([]string, 23)
+var roomdata = make([]string, 23)
+var numsprites int
+var sprites = make([]sprite, 21)
 var pos, fut position
 var char fillers
+var plyr statistics
 var debugmode bool = false
 /* end variables */
 
@@ -80,12 +92,51 @@ func clearnum(num int) {
 
 /* reads room from a file then places the room strings into the curroom[] buf */
 func setRoom(num string) {
+    var count int
     room, succ := svi.Filereader(num + ".room")
     if succ == 1 {
         fmt.Print("ERROR READING ROOM FILE")
     }
     for h:=0;h<23;h+=1 {
         curroom[h]=room[h]
+        count = h
+    }
+    /* extract data lines*/
+    count+=1 //23, but line #24
+    roomdata[0] = room[count]
+    if roomdata[0] == "Data:" {
+        count+=1 //24, but line #25
+        roomdata[1] = room[count]
+        num, _:=sc.Atoi(roomdata[1]) //the number 3
+        numsprites=num
+        for i:=2;i<(num+2);i+=1 { //starting at 2, until we reach 4 (2,3,4)
+            count+=1//25, but line #26
+            roomdata[i] = room[count]
+        }
+        /* for the number of sprites, do this for reach sprite:
+        roomdata[] starts at [2] for being relevant (0,1 being Data: and 3) */
+        //var buf = make([]int, 5) //account for 3 plyr plus (x,y)
+        for j:=0;j<num;j+=1 {
+            str:=roomdata[j+2] //starts at [2]
+            newstr:=strings.Split(str, ",")
+            sprites[j].f.icon, _ = utf8.DecodeRuneInString(newstr[0])
+            sprites[j].s.hlth, _ = sc.Atoi(newstr[1])
+            sprites[j].s.atk, _ = sc.Atoi(newstr[2])
+            sprites[j].s.dfs, _ = sc.Atoi(newstr[3])
+            sprites[j].p.x, _ = sc.Atoi(newstr[4])
+            sprites[j].p.y, _ = sc.Atoi(newstr[5])
+            tmpstr:=curroom[sprites[j].p.y]
+            var char rune
+            for i:=0;len(tmpstr) > 0;i+=1 {
+                character, size := utf8.DecodeRuneInString(tmpstr)
+        		tmpstr = tmpstr[size:]
+                if i == sprites[j].p.x {
+                    char=character
+                }
+            }
+            sprites[j].f.fill = char
+
+        }
     }
 }
 
@@ -96,6 +147,12 @@ func printRoom() {
         /* clearing in case the map doesn't fill the standard 23x80 width */
         extra := utf8.RuneCountInString(curroom[i])
         clearln(extra)
+    }
+}
+
+func populateCreeps() {
+    for i:=0;i<numsprites;i+=1 {
+        placeRune(sprites[i].p.x, sprites[i].p.y, sprites[i].f.icon)
     }
 }
 
@@ -216,6 +273,7 @@ func main() {
     clearln(0)
     setRoom("1")
     pos.x, pos.y, fut.x, fut.y = 5, 1, 5, 1
+    plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
     var first bool = true
 
     for ;string([]byte(b)[0]) != "q"; {
@@ -224,6 +282,7 @@ func main() {
         } else {
             b[0] = 32
             first=false
+            populateCreeps()
         }
         usrin := string([]byte(b)[0])
 
@@ -336,15 +395,14 @@ func main() {
         char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon)
         printRoom()
         if s:=utf8.RuneCountInString(usrin); debugmode == false {
-            fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR)
-            clearln(30)
+            fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
+            clearln(19)
         } else {
             fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR, usrin)
             clearln(30+7+s)
         }
-
         pos.x, pos.y = fut.x, fut.y
-        }
+    }
 
-    fmt.Println("")
+    fmt.Println("NEEIIII")
 }
