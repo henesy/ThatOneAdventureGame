@@ -308,12 +308,13 @@ func main() {
                     fmt.Print(" ")
                 }
                 fmt.Print("║")
-                /* body of inventory*/
+                /* body of inventory */
                 for i:=0;i<height-5;i+=1 {
                     fmt.Print("║")
                     clearln(2)
                     fmt.Print("║")
                 }
+                /* end body of inventory */
                 fmt.Print("╚")
                 for i:=0;i<width-2;i+=1 {
                     fmt.Print("═")

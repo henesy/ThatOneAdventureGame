@@ -1,9 +1,9 @@
 #!/bin/bash
 curdir=$(pwd)
 mkdir $GOPATH/src/svi
-cd ../
 cp ./src/svi.go $GOPATH/src/svi/
 cd $GOPATH/src/svi
 go install svi
 cd $curdir
 echo "done"
+
