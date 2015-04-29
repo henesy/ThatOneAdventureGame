@@ -2,141 +2,241 @@ package main
 
 import (
     "fmt"
+    "svi"
     "os"
     "unicode/utf8"
+    "flag"
+sc  "strconv"
 )
 
-/* terminal height and width */
-const height, width = 24, 80
-//const width = 80
-/* room info, roomb is [room num][height][width] */
-var curroom = make([]string, 23)
-var roomb [10][24][81]string
 type position struct {
     x int
     y int
 }
-var pos position
-var icon, fill rune = '👱', ' '
-//var fill rune = ' '
-//👳
-var fillU, fillD, fillL, fillR rune
 
-var extra int
-var dir string
-var fut int
-var moved bool = false
+type fillers struct {
+    icon rune
+    fill rune
+    fillU rune
+    fillD rune
+    fillL rune
+    fillR rune
+}
+
+var height, width int /* terminal height/width */
+var curroom = make([]string, 23)
+var pos, fut position
+var char fillers
+/* end variables */
+
+/* clears a line of the screen */
+func clearln(extra int) {
+    for i:=0;i<(width-extra);i+=1 {
+        fmt.Print(" ")
+    }
+}
+
+/* clears the entire screen (if full) */
+func clearscrn() {
+    for h:=0;h<height;h+=1 {
+        for i:=0;i<width;i+=1 {
+            fmt.Print(" ")
+        }
+    }
+}
+
+/* reads room from a file then places the room strings into the curroom[] buf */
+func setRoom(num string) {
+    room, succ := svi.Filereader(num + ".room")
+    if succ == 1 {
+        fmt.Print("ERROR READING ROOM FILE")
+    }
+    for h:=0;h<23;h+=1 {
+        curroom[h]=room[h]
+    }
+}
+
+/* prints the curroom[] buf to screen */
+func printRoom() {
+    for i:=0;i<len(curroom);i+=1 {
+        fmt.Printf("%s", curroom[i])
+        /* clearing in case the map doesn't fill the standard 23x80 width */
+        extra := utf8.RuneCountInString(curroom[i])
+        clearln(extra)
+    }
+}
+
+/* places a rune (pic) at coordinate (x,y) */
+func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
+    str := curroom[y]
+    var newstr string
+
+    for i:=0;len(str) > 0;i+=1 {
+        character, size := utf8.DecodeRuneInString(str)
+		str = str[size:]
+        if i == x {
+            filler = character
+            letter, _ := sc.Unquote(sc.QuoteRune(pic))
+            newstr = newstr + letter
+        } else {
+            letter, _ := sc.Unquote(sc.QuoteRune(character))
+            newstr = newstr + letter
+        }
+	}
+    curroom[y] = newstr
+
+    /* check for edge of the map */
+    posU, posL, posD, posR := (fut.y -1), (fut.x -1), (fut.y +1), (fut.x +1)
+
+    if posU < 0 {
+        fU='⚠'
+    } else {
+        str=curroom[posU]
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+    		str = str[size:]
+            if i == pos.x {
+                fU=character
+            }
+        }
+    }
+    /* scan lower line for fillD */
+    if posD > 22 {
+        fD = '⚠'
+    } else {
+        str=curroom[posD]
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+            str = str[size:]
+            if i == pos.x {
+                fD=character
+            }
+        }
+    }
+    /* scan same line for right character */
+    str=curroom[y]
+    if posR > 79 {
+        fR = '⚠'
+    } else {
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+            str = str[size:]
+            if i == posR {
+                fR=character
+            }
+        }
+    }
+    /* scan same line for left character */
+    str=curroom[y]
+    if posL < 0 {
+        fL = '⚠'
+    } else {
+        for i:=0;len(str) > 0;i+=1 {
+            character, size := utf8.DecodeRuneInString(str)
+            str = str[size:]
+            if i == posL {
+                fL=character
+            }
+        }
+    }
+
+    return
+}
+
+/* checks for barricades at a given coordinate */
+func check(x, y int, aga rune)(occ bool) {
+    str := curroom[y]
+    barricades := []rune{'═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
+         '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬'}
+    for i:=0;len(str) > 0;i+=1 {
+        _, size := utf8.DecodeRuneInString(str)
+        str = str[size:]
+        if i == x {
+            for _, bar := range barricades {
+                if aga == bar {
+                    occ = true
+                    break
+                } else {
+                    occ = false
+                }
+            }
+            break
+        }
+    }
+    return
+}
+
 
 func main() {
-	var b []byte = make([]byte, 1)
-    clear(0)
+    flag.IntVar(&height, "height", 24, "Set height of terminal screen [24]")
+    flag.IntVar(&width, "width", 80, "Set width of terminal screen [80]")
+    flag.Parse()
+
+    char.icon, char.fill = '👱', ' '
+    var b []byte = make([]byte, 1)
+    clearln(0)
     setRoom("1")
-    pos.x=5
-    pos.y=1
+    pos.x, pos.y, fut.x, fut.y = 5, 1, 5, 1
+    var first bool = true
+
     for ;string([]byte(b)[0]) != "q"; {
-        dir_fill := checkObstruction()
-        if safeMove == true {
-            placeCharacter(pos.x, pos.y, icon)
-            moved = false
+        if first == false {
+            os.Stdin.Read(b)
         } else {
-            if dir == "Up" {
-                if moved == false {
-                    placeCharacter(pos.x, pos.y, dir_fill)
-                    pos.y +=1
-                    moved = true
-                }
-            } else if dir == "Down" {
-                if moved == false {
-                    placeCharacter(pos.x, pos.y, dir_fill)
-                    pos.y -=1
-                    moved = true
-                }
-            } else if dir == "Left" {
-                if moved == false {
-                    placeCharacter(pos.x, pos.y, dir_fill)
-                    pos.x +=1
-                    moved = true
-                }
-            } else if dir == "Right" {
-                if moved == false {
-                    placeCharacter(pos.x, pos.y, dir_fill)
-                    pos.x -=1
-                    moved = true
-                }
-            } else {
-                placeCharacter(pos.x, pos.y, fill)
-                moved = false
-                safeMove = true
-            }
-            placeCharacter(pos.x, pos.y, icon)
+            b[0] = 32
+            first=false
         }
-        printRoom()
-        //fmt.Print("User Stats:")
-        //clear(11)
-        fmt.Printf("Position: %2d,%2d; UDRL: %c,%c,%c,%c", pos.x, pos.y, fillU, fillD, fillR, fillL)
-        //clear(15) //without "; Fills: ..."
-        clear(30)
-        os.Stdin.Read(b)
-        char := string([]byte(b)[0])
-        switch char {
-            case "a":
-                dir="Left"
-                placeCharacter(pos.x, pos.y, fill)
-                fut = pos.x - 1
-                //checkBarricades(dir)
-                if (fut) < 0 || safeMove == false {
-                    pos.x = pos.x
-                } else {
-                    pos.x = fut
+        usrin := string([]byte(b)[0])
+
+        switch usrin {
+            case "w":
+                if char.fillU != '⚠' && (check(pos.x, pos.y-1, char.fillU) == false){
+                    fut.y -=1
+                    if fut.y < 0 {
+                        fut.y +=1
+                    }
+
                 }
+                placeRune(pos.x, pos.y, char.fill)
+            case "a":
+                if char.fillL != '⚠' && (check(pos.x-1, pos.y, char.fillL) == false){
+                    fut.x -=1
+                    if fut.x < 0 {
+                        fut.x +=1
+                    }
+
+                }
+                placeRune(pos.x, pos.y, char.fill)
+            case "s":
+                if char.fillD != '⚠' && (check(pos.x, pos.y+1, char.fillD) == false){
+                    fut.y +=1
+                    if fut.y > 22 {
+                        fut.y -=1
+                    }
+
+                }
+                placeRune(pos.x, pos.y, char.fill)
 
             case "d":
-                dir="Right"
-                placeCharacter(pos.x, pos.y, fill)
-                fut = pos.x + 1
-                //checkBarricades(dir)
-                if (fut) > 79 || safeMove == false {
-                    pos.x = pos.x
-                } else {
-                    pos.x = fut
+                if char.fillR != '⚠' && (check(pos.x+1, pos.y, char.fillR) == false){
+                    fut.x +=1
+                    if fut.x > 79 {
+                        fut.x -=1
+                    }
+
                 }
-
-            case "w":
-                dir="Up"
-                placeCharacter(pos.x, pos.y, fill)
-                fut = pos.y - 1
-                //checkBarricades(dir)
-                if (fut) < 0 || safeMove == false {
-                    pos.y = pos.y
-                } else {
-                    pos.y = fut
-                }
-
-            case "s":
-                dir="Down"
-                placeCharacter(pos.x, pos.y, fill)
-                fut = pos.y + 1
-                //checkBarricades(dir)
-                if (fut) > 22 || safeMove == false {
-                    pos.y = pos.y
-                } else {
-                    pos.y = fut
-                }
-
-            case "o":
-                placeCharacter(pos.x, pos.y, fill)
-                openDoors()
-
+                placeRune(pos.x, pos.y, char.fill)
             default:
-                placeCharacter(pos.x, pos.y, fill)
-                dir=char
+
         }
-        fmt.Print(dir)
-        extra = utf8.RuneCountInString(dir) //number of runes in string
-        clear(extra)
-    }
-    /* testing printing a room */
-    printRoom()
-    copyRoom("1")
-    //printRoomB(1)
+
+        char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon)
+
+        printRoom()
+        fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c", pos.x, pos.y, char.fillU, char.fillL, char.fillD, char.fillR)
+        clearln(30)
+        pos.x, pos.y = fut.x, fut.y
+        }
+
+    fmt.Println("")
 }
