@@ -206,8 +206,10 @@ func main() {
     flag.IntVar(&height, "height", 24, "Set height of terminal screen [24]")
     flag.IntVar(&width, "width", 80, "Set width of terminal screen [80]")
     flag.Parse()
+
     oldState, _ := terminal.MakeRaw(0)
     defer terminal.Restore(0, oldState)
+
     char.icon, _ = utf8.DecodeRuneInString(icon_string)
     char.fill = ' '
     var b []byte = make([]byte, 1)
@@ -232,7 +234,6 @@ func main() {
                     if fut.y < 0 {
                         fut.y +=1
                     }
-
                 }
             case "a":
                 if char.fillL != '⚠' && (check(pos.x-1, pos.y, char.fillL) == false){
@@ -240,7 +241,6 @@ func main() {
                     if fut.x < 0 {
                         fut.x +=1
                     }
-
                 }
             case "s":
                 if char.fillD != '⚠' && (check(pos.x, pos.y+1, char.fillD) == false){
@@ -248,7 +248,6 @@ func main() {
                     if fut.y > 22 {
                         fut.y -=1
                     }
-
                 }
             case "d":
                 if char.fillR != '⚠' && (check(pos.x+1, pos.y, char.fillR) == false){
@@ -256,7 +255,6 @@ func main() {
                     if fut.x > 79 {
                         fut.x -=1
                     }
-
                 }
             case "o":
                 /* open doors */
@@ -283,6 +281,45 @@ func main() {
             case "i":
                 /* read inventory */
                 clearscrn()
+                fmt.Print("╔")
+                for i:=0;i<width-2;i+=1 {
+                    fmt.Print("═")
+                }
+                fmt.Print("╗")
+                fmt.Print("║")
+                for i:=0;i<33;i+=1 {
+                    fmt.Print(" ")
+                }
+                fmt.Print("║ Backpack ║")
+                for i:=0;i<33;i+=1 {
+                    fmt.Print(" ")
+                }
+                fmt.Print("║")
+                fmt.Print("║")
+                for i:=0;i<33;i+=1 {
+                    fmt.Print(" ")
+                }
+                fmt.Print("╚")
+                for i:=0;i<10;i+=1 {
+                    fmt.Print("═")
+                }
+                fmt.Print("╝")
+                for i:=0;i<33;i+=1 {
+                    fmt.Print(" ")
+                }
+                fmt.Print("║")
+                /* body of inventory*/
+                for i:=0;i<height-5;i+=1 {
+                    fmt.Print("║")
+                    clearln(2)
+                    fmt.Print("║")
+                }
+                fmt.Print("╚")
+                for i:=0;i<width-2;i+=1 {
+                    fmt.Print("═")
+                }
+                fmt.Print("╝")
+                clearln(0)
                 fmt.Scanln()
             case "D":
                 /* debug mode */
@@ -292,7 +329,6 @@ func main() {
                     debugmode = false
                 }
             default:
-
         }
         placeRune(pos.x, pos.y, char.fill)
 
