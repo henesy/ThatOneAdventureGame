@@ -9,6 +9,7 @@ import (
 sc  "strconv"
     "golang.org/x/crypto/ssh/terminal"
     "strings"
+    "math"
 )
 
 type position struct {
@@ -139,108 +140,122 @@ func populateCreeps() {
 }
 
 func moveCreeps() {
-    for i:=0;i<numsprites;i+=1 {
-        placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.fill, i)
-
-        /* now check if we're too close */
-
-        if (sprites[i].fut.x - fut.x) < 1 || (check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == true) {
-            sprites[i].fut.x +=1
-        }
-        if (sprites[i].fut.x - fut.x) < 1 || (check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == true) {
-            sprites[i].fut.x -=1
-        }
-        if (sprites[i].fut.y - fut.y) < 1 || (check(sprites[i].fut.x, sprites[i].fut.y-1, sprites[i].f.fillU) == true) {
-            sprites[i].fut.y +=1
-        }
-        if (sprites[i].fut.y - fut.y) < 1 || (check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == true) {
-            sprites[i].fut.y -=1
-        }
-
-        if sprites[i].pos.x > fut.x {
-            sprites[i].fut.x -=1
-        } else if sprites[i].pos.x < fut.x {
-            sprites[i].fut.x +=1
-        } else if sprites[i].pos.x == fut.x {
-            sprites[i].fut.x = sprites[i].pos.x
-        }
-
-        if sprites[i].pos.y > fut.y {
-            sprites[i].fut.y -=1
-        } else if sprites[i].pos.y < fut.y {
-            sprites[i].fut.y +=1
-        } else if sprites[i].pos.y == fut.y {
-            sprites[i].fut.y = sprites[i].pos.y
-        }
-
-        sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].fut.x, sprites[i].fut.y, sprites[i].f.icon, i)
-        sprites[i].pos.x, sprites[i].pos.y = sprites[i].fut.x, sprites[i].fut.y
+    bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
+    dirX, dirY := "", ""
+    for h:=0;h<numsprites;h+=1 {
+        bufX[h] = sprites[h].fut.x
+        bufY[h] = sprites[h].fut.y
     }
-}
+    bufX[numsprites] = fut.x
+    bufY[numsprites] = fut.y //add the player's coords
 
-func moveCreeps_old() {
-    var dirX string = "None"
-    var dirY string = "None"
-
+    /* set initial direction */
     for i:=0;i<numsprites;i+=1 {
         placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.fill, i)
-        /* find location of char -> set direction -> find paths -> pick best path */
-        if sprites[i].pos.x > fut.x {
+        if sprites[i].fut.x > fut.x {
             dirX = "Left"
-        } else if sprites[i].pos.x == fut.x {
-            dirX = "None"
-        } else {
+        } else if sprites[i].fut.x < fut.x {
             dirX = "Right"
-        }
-        if sprites[i].pos.y > fut.y {
-            dirY = "Up"
-        } else if sprites[i].pos.y == fut.y {
-            dirY = "None"
-        } else {
-            dirY = "Down"
-        }
-        /* check for barricades/opimize */
-        if sprites[i].f.fillU != '⚠' && sprites[i].f.fillU != char.icon && (check(sprites[i].fut.x, sprites[i].fut.y-1, sprites[i].f.fillU) == false) {
-            dirY = dirY
-        } else {
-            dirY = "None"
-        }
-        if sprites[i].f.fillL != '⚠' && sprites[i].f.fillL != char.icon && (check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == false) {
-            dirX = dirX
         } else {
             dirX = "None"
         }
-        if sprites[i].f.fillD != '⚠' && sprites[i].f.fillD != char.icon && (check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == false) {
-            dirY = dirY
+        if sprites[i].fut.y > fut.y {
+            dirY = "Up"
+        } else if sprites[i].fut.y < fut.y {
+            dirY = "Down"
         } else {
             dirY = "None"
         }
-        if sprites[i].f.fillR != '⚠' && sprites[i].f.fillR != char.icon && (check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == false) {
-            dirX = dirX
-        } else {
+    }
+    //fmt.Print(dirX, dirY)
+    /* nullify movement if close to something */
+    for h:=0;h<numsprites;h+=1 {
+        for _, num:=range bufX {
+            floatX, floatnum := float64(fut.x), float64(num)
+            res := math.Mod(floatX, floatnum)
+            if num == sprites[h].fut.x {
+                dirX = dirX
+            } else if res > 0.80 {
+                dirX = "None"
+            }
+            //fmt.Print("X: ", floatX,floatnum,res)
+        }
+        for _, num:=range bufY {
+            floatY, floatnum := float64(fut.y), float64(num)
+            res := math.Mod(floatY, floatnum)
+            if num == sprites[h].fut.y {
+                dirY = dirY
+            } else if res > 0.80 {
+                dirY = "None"
+            }
+            //fmt.Print("Y: ", floatY,floatnum,res)
+        }
+
+    }
+    //fmt.Print(dirX, dirY)
+
+    /* nullify movement if check fails, character adjacent, or movement close */
+    for j:=0;j<numsprites;j+=1 {
+        if check(sprites[j].fut.x-1, sprites[j].fut.y, sprites[j].f.fillL) == true || check(sprites[j].fut.x+1, sprites[j].fut.y, sprites[j].f.fillR) == true {
+            dirX = "None"
+        }
+        if check(sprites[j].fut.x, sprites[j].fut.y-1, sprites[j].f.fillU) == true || check(sprites[j].fut.x, sprites[j].fut.y+1, sprites[j].f.fillD) == true {
+            dirY = "None"
+        }
+        if sprites[j].f.fillL == char.icon || sprites[j].f.fillR == char.icon {
+            dirX = "None"
+        }
+        if sprites[j].f.fillD == char.icon || sprites[j].f.fillU == char.icon {
+            dirY = "None"
+        }
+
+        var num int
+        if sprites[j].fut.x > fut.x {
+            num = sprites[j].fut.x - fut.x
+        } else if sprites[j].fut.x < fut.x {
+            num = fut.x - sprites[j].fut.x
+        }
+        if num < 3 {
             dirX = "None"
         }
 
-        /* place icon at s.fut.x,s.fut.y */
+        if sprites[j].fut.y > fut.y {
+            num = sprites[j].fut.y - fut.y
+        } else if sprites[j].fut.y < fut.y {
+            num = fut.y - sprites[j].fut.y
+        }
+        if num < 3 {
+            dirY = "None"
+        }
+    }
+    //fmt.Print(dirY, dirX)
+    if rn := svi.Random(0,2); dirY != "None" && dirX != "None" {
+        if rn == 0 {
+            dirY = "None"
+        } else if rn == 1 {
+            dirX = "None"
+        }
+    }
+    /* translate dirX dirY */
+    for k:=0;k<numsprites;k+=1 {
         if dirX == "Left" {
-            sprites[i].fut.x = sprites[i].pos.x - 1
-        } else if dirX == "None" {
-            sprites[i].fut.x = sprites[i].pos.x
+            sprites[k].fut.x -=1
+        } else if dirX == "Right" {
+            sprites[k].fut.x +=1
         } else {
-            sprites[i].fut.x = sprites[i].pos.x + 1
+            sprites[k].fut.x = sprites[k].fut.x
         }
         if dirY == "Up" {
-            sprites[i].fut.y = sprites[i].pos.y - 1
-        } else if dirY == "None" {
-            sprites[i].fut.y = sprites[i].pos.y
+            sprites[k].fut.y -=1
+        } else if dirY == "Down" {
+            sprites[k].fut.y +=1
         } else {
-            sprites[i].fut.y = sprites[i].pos.y + 1
+            sprites[k].fut.y = sprites[k].fut.y
         }
 
-        sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].fut.x, sprites[i].fut.y, sprites[i].f.icon, i)
-        sprites[i].pos.x, sprites[i].pos.y = sprites[i].fut.x, sprites[i].fut.y
+        sprites[k].f.fill, sprites[k].f.fillU, sprites[k].f.fillL, sprites[k].f.fillD, sprites[k].f.fillR = placeRune(sprites[k].fut.x, sprites[k].fut.y, sprites[k].f.icon, k)
+        sprites[k].pos.x, sprites[k].pos.y = sprites[k].fut.x, sprites[k].fut.y
     }
-    /* for reference: char.fillL != '⚠' && (check(pos.x-1, pos.y, char.fillL) == false) */
 }
 
 /* places a rune (pic) at coordinate (x,y) */
@@ -328,8 +343,9 @@ func placeRune(x, y int, pic rune, spritenum int)(filler, fU, fL, fD, fR rune) {
 /* checks for barricades at a given coordinate */
 func check(x, y int, aga rune)(occ bool) {
     str := curroom[y]
+    /* maybe re-do this to load from sprites[i].f.icon for more goodness */
     barricades := []rune{'═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
-         '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬'}
+         '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬', char.icon}
     for i:=0;len(str) > 0;i+=1 {
         _, size := utf8.DecodeRuneInString(str)
         str = str[size:]
@@ -493,8 +509,8 @@ func main() {
             default:
         }
         placeRune(pos.x, pos.y, char.fill, 99)
-        moveCreeps()
         char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon, 99)
+        moveCreeps()
         printRoom()
         if s:=utf8.RuneCountInString(usrin); debugmode == false {
             fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
