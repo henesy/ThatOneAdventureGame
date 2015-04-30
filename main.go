@@ -140,17 +140,20 @@ func populateCreeps() {
 }
 
 func moveCreeps() {
+
+    //for h:=0;h<numsprites;h+=1 {
+
+    //}
+
     bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
-    for h:=0;h<numsprites;h+=1 {
-        bufX[h] = sprites[h].fut.x
-        bufY[h] = sprites[h].fut.y
-    }
-    bufX[numsprites] = fut.x
-    bufY[numsprites] = fut.y //add the player's coords
 
     /* set initial direction */
     for i:=0;i<numsprites;i+=1 {
         dirX, dirY := make([]string, numsprites), make([]string, numsprites)
+        bufX[i] = sprites[i].fut.x
+        bufY[i] = sprites[i].fut.y
+        bufX[numsprites] = fut.x
+        bufY[numsprites] = fut.y //add the player's coords
 
             placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.fill, i)
             if sprites[i].fut.x > fut.x {
@@ -166,6 +169,22 @@ func moveCreeps() {
                 dirY[i] = "Down"
             } else {
                 dirY[i] = "None"
+            }
+
+            /* check for icons next to each other via fills */
+            for h:=0;h<numsprites;h+=1 {
+                if sprites[i].f.fillU == sprites[h].f.icon && dirY[i] == "Up"{
+                    dirY[i]="Down"
+                }
+                if sprites[i].f.fillD == sprites[h].f.icon && dirY[i] == "Down"{
+                    dirY[i]="Up"
+                }
+                if sprites[i].f.fillL == sprites[h].f.icon && dirX[i] == "Left"{
+                    dirX[i]="Right"
+                }
+                if sprites[i].f.fillR == sprites[h].f.icon && dirX[i] == "Right"{
+                    dirX[i]="Left"
+                }
             }
 
         //fmt.Print(dirX[i], dirY[i])
@@ -268,6 +287,8 @@ func moveCreeps() {
                 dirX[i] = "None"
             }
         }
+
+
         /* translate dirX[i] dirY[i] */
 
             if dirX[i] == "Left" {
@@ -564,10 +585,8 @@ func main() {
             clearln(30+7+s)
             fmt.Printf("%c,%c,%c,%c",sprites[0].f.fillU,sprites[0].f.fillL,sprites[0].f.fillD,sprites[0].f.fillR)
             clearln(7)
-            fmt.Print(sprites[0])
-            clearln(57)
-            fmt.Print(sprites[1])
-            clearln(57)
+            fmt.Printf("%c,%c,%c,%c",sprites[1].f.fillU, sprites[1].f.fillL, sprites[1].f.fillD, sprites[1].f.fillR)
+            clearln(7)
         }
         pos.x, pos.y = fut.x, fut.y
     }
