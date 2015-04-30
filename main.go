@@ -459,6 +459,7 @@ func main() {
     plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
     var first bool = true
 
+    var other int = 0
     for ;string([]byte(b)[0]) != "q"; {
         if first == false {
             os.Stdin.Read(b)
@@ -575,7 +576,13 @@ func main() {
         }
         placeRune(pos.x, pos.y, char.fill, 99)
         char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon, 99)
-        moveCreeps()
+        if other == 2 {
+            moveCreeps()
+            other = 0
+        } else {
+            other +=1
+        }
+
         printRoom()
         if s:=utf8.RuneCountInString(usrin); debugmode == false {
             fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
