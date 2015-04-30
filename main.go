@@ -9,7 +9,7 @@ import (
 sc  "strconv"
     "golang.org/x/crypto/ssh/terminal"
     "strings"
-    "math"
+    //"math"
 )
 
 type position struct {
@@ -141,7 +141,6 @@ func populateCreeps() {
 
 func moveCreeps() {
     bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
-    dirX, dirY := "", ""
     for h:=0;h<numsprites;h+=1 {
         bufX[h] = sprites[h].fut.x
         bufY[h] = sprites[h].fut.y
@@ -151,110 +150,143 @@ func moveCreeps() {
 
     /* set initial direction */
     for i:=0;i<numsprites;i+=1 {
-        placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.fill, i)
-        if sprites[i].fut.x > fut.x {
-            dirX = "Left"
-        } else if sprites[i].fut.x < fut.x {
-            dirX = "Right"
-        } else {
-            dirX = "None"
-        }
-        if sprites[i].fut.y > fut.y {
-            dirY = "Up"
-        } else if sprites[i].fut.y < fut.y {
-            dirY = "Down"
-        } else {
-            dirY = "None"
-        }
-    }
-    //fmt.Print(dirX, dirY)
-    /* nullify movement if close to something */
-    for h:=0;h<numsprites;h+=1 {
-        for _, num:=range bufX {
-            floatX, floatnum := float64(fut.x), float64(num)
-            res := math.Mod(floatX, floatnum)
-            if num == sprites[h].fut.x {
-                dirX = dirX
-            } else if res > 0.80 {
-                dirX = "None"
+        dirX, dirY := make([]string, numsprites), make([]string, numsprites)
+
+            placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.fill, i)
+            if sprites[i].fut.x > fut.x {
+                dirX[i] = "Left"
+            } else if sprites[i].fut.x < fut.x {
+                dirX[i] = "Right"
+            } else {
+                dirX[i] = "None"
             }
-            //fmt.Print("X: ", floatX,floatnum,res)
-        }
-        for _, num:=range bufY {
-            floatY, floatnum := float64(fut.y), float64(num)
-            res := math.Mod(floatY, floatnum)
-            if num == sprites[h].fut.y {
-                dirY = dirY
-            } else if res > 0.80 {
-                dirY = "None"
+            if sprites[i].fut.y > fut.y {
+                dirY[i] = "Up"
+            } else if sprites[i].fut.y < fut.y {
+                dirY[i] = "Down"
+            } else {
+                dirY[i] = "None"
             }
-            //fmt.Print("Y: ", floatY,floatnum,res)
-        }
 
-    }
-    //fmt.Print(dirX, dirY)
+        //fmt.Print(dirX[i], dirY[i])
+        /* nullify movement if close to something */
+        /* make math.Mod() to numX numY format */
 
-    /* nullify movement if check fails, character adjacent, or movement close */
-    for j:=0;j<numsprites;j+=1 {
-        if check(sprites[j].fut.x-1, sprites[j].fut.y, sprites[j].f.fillL) == true || check(sprites[j].fut.x+1, sprites[j].fut.y, sprites[j].f.fillR) == true {
-            dirX = "None"
-        }
-        if check(sprites[j].fut.x, sprites[j].fut.y-1, sprites[j].f.fillU) == true || check(sprites[j].fut.x, sprites[j].fut.y+1, sprites[j].f.fillD) == true {
-            dirY = "None"
-        }
-        if sprites[j].f.fillL == char.icon || sprites[j].f.fillR == char.icon {
-            dirX = "None"
-        }
-        if sprites[j].f.fillD == char.icon || sprites[j].f.fillU == char.icon {
-            dirY = "None"
-        }
+            var res int
+            var xCanc, yCanc bool
+            for _, num:=range bufX {
+                //fut.x and num
+                //res := math.Mod(floatX, floatnum)
+                if fut.x > num {
+                    res = fut.x - num
+                } else if num > fut.x {
+                    res = num - fut.x
+                }
 
-        var num int
-        if sprites[j].fut.x > fut.x {
-            num = sprites[j].fut.x - fut.x
-        } else if sprites[j].fut.x < fut.x {
-            num = fut.x - sprites[j].fut.x
-        }
-        if num < 3 {
-            dirX = "None"
-        }
+                if num == sprites[i].fut.x {
+                    dirX[i] = dirX[i]
+                    xCanc = false
+                } else if res < 4 {
+                    //dirX[i] = "None"
+                    xCanc = true
+                }
+            }
+                //fmt.Print("X: ", floatX,floatnum,res)
+            for _, num:=range bufY {
+                //fut.y and num
+                //res := math.Mod(floatY, floatnum)
+                if fut.y > num {
+                    res = fut.y - num
+                } else if num > fut.y {
+                    res = num - fut.y
+                }
 
-        if sprites[j].fut.y > fut.y {
-            num = sprites[j].fut.y - fut.y
-        } else if sprites[j].fut.y < fut.y {
-            num = fut.y - sprites[j].fut.y
-        }
-        if num < 3 {
-            dirY = "None"
-        }
-    }
-    //fmt.Print(dirY, dirX)
-    if rn := svi.Random(0,2); dirY != "None" && dirX != "None" {
-        if rn == 0 {
-            dirY = "None"
-        } else if rn == 1 {
-            dirX = "None"
-        }
-    }
-    /* translate dirX dirY */
-    for k:=0;k<numsprites;k+=1 {
-        if dirX == "Left" {
-            sprites[k].fut.x -=1
-        } else if dirX == "Right" {
-            sprites[k].fut.x +=1
-        } else {
-            sprites[k].fut.x = sprites[k].fut.x
-        }
-        if dirY == "Up" {
-            sprites[k].fut.y -=1
-        } else if dirY == "Down" {
-            sprites[k].fut.y +=1
-        } else {
-            sprites[k].fut.y = sprites[k].fut.y
-        }
+                if num == sprites[i].fut.y {
+                    dirY[i] = dirY[i]
+                    yCanc = false
+                } else if res < 4 {
+                    //dirY[i] = "None"
+                    yCanc = true
+                }
+                //fmt.Print("Y: ", floatY,floatnum,res)
+            }
+            if xCanc == true && yCanc == true {
+                dirX[i] = "None"
+                dirY[i] = "None"
+            } else if xCanc == true && yCanc == false {
+                dirY[i] = dirY[i]
+                dirX[i] = "None"
+            } else if xCanc == false && yCanc == true {
+                dirX[i] = dirX[i]
+                dirY[i] = "None"
+            }
 
-        sprites[k].f.fill, sprites[k].f.fillU, sprites[k].f.fillL, sprites[k].f.fillD, sprites[k].f.fillR = placeRune(sprites[k].fut.x, sprites[k].fut.y, sprites[k].f.icon, k)
-        sprites[k].pos.x, sprites[k].pos.y = sprites[k].fut.x, sprites[k].fut.y
+
+        //fmt.Print(dirX[i], dirY[i])
+
+        /* nullify movement if check fails, character adjacent, or movement close */
+
+            if check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == true || check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == true {
+                dirX[i] = "None"
+            }
+            if check(sprites[i].fut.x, sprites[i].fut.y-1, sprites[i].f.fillU) == true || check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == true {
+                dirY[i] = "None"
+            }
+            if sprites[i].f.fillL == char.icon || sprites[i].f.fillR == char.icon {
+                dirX[i] = "None"
+            }
+            if sprites[i].f.fillD == char.icon || sprites[i].f.fillU == char.icon {
+                dirY[i] = "None"
+            }
+
+            var numX int
+            if sprites[i].fut.x > fut.x {
+                numX = sprites[i].fut.x - fut.x
+            } else if sprites[i].fut.x < fut.x {
+                numX = fut.x - sprites[i].fut.x
+            }
+
+
+            var numY int
+            if sprites[i].fut.y > fut.y {
+                numY = sprites[i].fut.y - fut.y
+            } else if sprites[i].fut.y < fut.y {
+                numY = fut.y - sprites[i].fut.y
+            }
+            if numY < 4  && numX < 4{
+                dirY[i] = "None"
+            }
+            if numX < 4 && numY < 4 {
+                dirX[i] = "None"
+            }
+
+        //fmt.Print(dirY[i], dirX[i])
+        if rn := svi.Random(0,2); dirY[i] != "None" && dirX[i] != "None" {
+            if rn == 0 {
+                dirY[i] = "None"
+            } else if rn == 1 {
+                dirX[i] = "None"
+            }
+        }
+        /* translate dirX[i] dirY[i] */
+
+            if dirX[i] == "Left" {
+                sprites[i].fut.x -=1
+            } else if dirX[i] == "Right" {
+                sprites[i].fut.x +=1
+            } else {
+                sprites[i].fut.x = sprites[i].fut.x
+            }
+            if dirY[i] == "Up" {
+                sprites[i].fut.y -=1
+            } else if dirY[i] == "Down" {
+                sprites[i].fut.y +=1
+            } else {
+                sprites[i].fut.y = sprites[i].fut.y
+            }
+
+            sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].fut.x, sprites[i].fut.y, sprites[i].f.icon, i)
+            sprites[i].pos.x, sprites[i].pos.y = sprites[i].fut.x, sprites[i].fut.y
     }
 }
 
@@ -292,8 +324,14 @@ func placeRune(x, y int, pic rune, spritenum int)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
     		str = str[size:]
-            if i == fut.x {
-                fU=character
+            if pic == char.icon || spritenum == 99 {
+                if i == fut.x {
+                    fU=character
+                }
+            } else {
+                if i == sprites[spritenum].fut.x {
+                    fU=character
+                }
             }
         }
     }
@@ -305,8 +343,14 @@ func placeRune(x, y int, pic rune, spritenum int)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
             str = str[size:]
-            if i == fut.x {
-                fD=character
+            if pic == char.icon || spritenum == 99 {
+                if i == fut.x {
+                    fD=character
+                }
+            } else {
+                if i == sprites[spritenum].fut.x {
+                    fD=character
+                }
             }
         }
     }
@@ -318,9 +362,9 @@ func placeRune(x, y int, pic rune, spritenum int)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
             str = str[size:]
-            if i == posR {
-                fR=character
-            }
+                if i == posR {
+                    fR=character
+                }
         }
     }
     /* scan same line for left character */
@@ -331,9 +375,9 @@ func placeRune(x, y int, pic rune, spritenum int)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
             str = str[size:]
-            if i == posL {
-                fL=character
-            }
+                if i == posL {
+                    fL=character
+                }
         }
     }
 
@@ -518,8 +562,12 @@ func main() {
         } else {
             fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR, usrin)
             clearln(30+7+s)
-            fmt.Printf("%c",sprites[0].f.fillU)
-            clearln(1)
+            fmt.Printf("%c,%c,%c,%c",sprites[0].f.fillU,sprites[0].f.fillL,sprites[0].f.fillD,sprites[0].f.fillR)
+            clearln(7)
+            fmt.Print(sprites[0])
+            clearln(57)
+            fmt.Print(sprites[1])
+            clearln(57)
         }
         pos.x, pos.y = fut.x, fut.y
     }
