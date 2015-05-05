@@ -12,11 +12,14 @@ import (
 	//"math"
 )
 
+/* current position in (x,y) of something in regards to the map's (x,y)
+(perhaps expand to become (x,y,z)? to account for levels?) */
 type position struct {
 	x int
 	y int
 }
 
+/* fillers are the characters stored in relation to the sprite's current (x,y) */
 type fillers struct {
 	icon  rune
 	fill  rune
@@ -26,12 +29,14 @@ type fillers struct {
 	fillR rune
 }
 
+/* stats and characteristics of a sprite or the player */
 type statistics struct {
 	hlth int
 	atk  int
 	dfs  int
 }
 
+/* basic sprite meta-struct */
 type sprite struct {
 	pos position
 	fut position
@@ -49,7 +54,7 @@ var char fillers
 var plyr statistics
 var debugmode bool = false
 
-/* end variables */
+/* -- end variables -- */
 
 /* clears a line of the screen */
 func clearln(extra int) {
@@ -67,6 +72,7 @@ func clearscrn() {
 	}
 }
 
+/* clear 'num' number of spaces (on demand, limited, clearing) */
 func clearnum(num int) {
 	for i := 0; i < num; i += 1 {
 		fmt.Print(" ")
@@ -97,7 +103,7 @@ func setRoom(num string) {
 			roomdata[i] = room[count]
 		}
 		/* for the number of sprites, do this for reach sprite:
-		   roomdata[] starts at [2] for being relevant (0,1 being Data: and 3) */
+		   roomdata[] starts at [2] for being relevant ([0] & [1] being 'Data:'' and '3') */
 		//var buf = make([]int, 5) //account for 3 plyr plus (x,y)
 		for j := 0; j < num; j += 1 {
 			str := roomdata[j+2] //starts at [2]
@@ -133,6 +139,7 @@ func printRoom() {
 	}
 }
 
+/* set original position, futures, and fills for all sprites */
 func populateCreeps() {
 	for i := 0; i < numsprites; i += 1 {
 		sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.icon, i)
@@ -140,12 +147,8 @@ func populateCreeps() {
 	}
 }
 
+/* decides movement for and sets sprites[i].fut.x,y for all sprites */
 func moveCreeps() {
-
-	//for h:=0;h<numsprites;h+=1 {
-
-	//}
-
 	bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
 
 	/* set initial direction */
@@ -188,9 +191,7 @@ func moveCreeps() {
 			}
 		}
 
-		//fmt.Print(dirX[i], dirY[i])
 		/* nullify movement if close to something */
-		/* make math.Mod() to numX numY format */
 
 		var res int
 		var xCanc, yCanc bool
@@ -211,7 +212,7 @@ func moveCreeps() {
 				xCanc = true
 			}
 		}
-		//fmt.Print("X: ", floatX,floatnum,res)
+
 		for _, num := range bufY {
 			//fut.y and num
 			//res := math.Mod(floatY, floatnum)
@@ -228,7 +229,6 @@ func moveCreeps() {
 				//dirY[i] = "None"
 				yCanc = true
 			}
-			//fmt.Print("Y: ", floatY,floatnum,res)
 		}
 		if xCanc == true && yCanc == true {
 			dirX[i] = "None"
@@ -240,8 +240,6 @@ func moveCreeps() {
 			dirX[i] = dirX[i]
 			dirY[i] = "None"
 		}
-
-		//fmt.Print(dirX[i], dirY[i])
 
 		/* nullify movement if check fails, character adjacent, or movement close */
 
@@ -279,6 +277,13 @@ func moveCreeps() {
 		}
 
         /* -!- Add a check for upper right or upper left (diagonals) -!- */
+        /*
+        get coords -> check x+1,y+1;x-1,y-1;x+1,y-1;x-1,y+1 ->
+        check against sprites[i].f.icon -> if x,y == [].icon ->
+        determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
+        check sprite[num].fut if num < sprites[i] (not sure if order is necessary
+        if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
+        */
 
 		/* Pick a direction */
 
@@ -582,7 +587,7 @@ func main() {
 			other += 1
 		}
 
-		printRoom()
+		go printRoom()
 		if s := utf8.RuneCountInString(usrin); debugmode == false {
 			fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
 			clearln(19)
