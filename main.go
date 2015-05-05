@@ -9,33 +9,14 @@ import (
 sc  "strconv"
     "golang.org/x/crypto/ssh/terminal"
     "strings"
+    //"math"
 )
 
 type position struct {
     x int
     y int
 }
-/*
-type model interface {
-    MoveUp()(int, int)
-    MoveDown()(int, int)
-    MoveLeft()(int, int)
-    MoveRight()(int, int)
-}
 
-func (p position) moveUp()(int, int) {
-    return p.x, p.y-1
-}
-func (p position) moveDown()(int, int) {
-    return p.x, p.y+1
-}
-func (p position) moveLeft()(int, int) {
-    return p.x-1, p.y
-}
-func (p position) moveRight()(int, int) {
-    return p.x+1, p.y
-}
-*/
 type fillers struct {
     icon rune
     fill rune
@@ -52,7 +33,8 @@ type statistics struct {
 }
 
 type sprite struct {
-    p position
+    pos position
+    fut position
     f fillers
     s statistics
 }
@@ -123,14 +105,14 @@ func setRoom(num string) {
             sprites[j].s.hlth, _ = sc.Atoi(newstr[1])
             sprites[j].s.atk, _ = sc.Atoi(newstr[2])
             sprites[j].s.dfs, _ = sc.Atoi(newstr[3])
-            sprites[j].p.x, _ = sc.Atoi(newstr[4])
-            sprites[j].p.y, _ = sc.Atoi(newstr[5])
-            tmpstr:=curroom[sprites[j].p.y]
+            sprites[j].pos.x, _ = sc.Atoi(newstr[4])
+            sprites[j].pos.y, _ = sc.Atoi(newstr[5])
+            tmpstr:=curroom[sprites[j].pos.y]
             var char rune
             for i:=0;len(tmpstr) > 0;i+=1 {
                 character, size := utf8.DecodeRuneInString(tmpstr)
         		tmpstr = tmpstr[size:]
-                if i == sprites[j].p.x {
+                if i == sprites[j].pos.x {
                     char=character
                 }
             }
@@ -152,12 +134,185 @@ func printRoom() {
 
 func populateCreeps() {
     for i:=0;i<numsprites;i+=1 {
-        placeRune(sprites[i].p.x, sprites[i].p.y, sprites[i].f.icon)
+        sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.icon, i)
+        sprites[i].fut.x, sprites[i].fut.y = sprites[i].pos.x, sprites[i].pos.y
+    }
+}
+
+func moveCreeps() {
+
+    //for h:=0;h<numsprites;h+=1 {
+
+    //}
+
+    bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
+
+    /* set initial direction */
+    for i:=0;i<numsprites;i+=1 {
+        dirX, dirY := make([]string, numsprites), make([]string, numsprites)
+        bufX[i] = sprites[i].fut.x
+        bufY[i] = sprites[i].fut.y
+        bufX[numsprites] = fut.x
+        bufY[numsprites] = fut.y //add the player's coords
+
+            placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.fill, i)
+            if sprites[i].fut.x > fut.x {
+                dirX[i] = "Left"
+            } else if sprites[i].fut.x < fut.x {
+                dirX[i] = "Right"
+            } else {
+                dirX[i] = "None"
+            }
+            if sprites[i].fut.y > fut.y {
+                dirY[i] = "Up"
+            } else if sprites[i].fut.y < fut.y {
+                dirY[i] = "Down"
+            } else {
+                dirY[i] = "None"
+            }
+
+            /* check for icons next to each other via fills */
+            for h:=0;h<numsprites;h+=1 {
+                if sprites[i].f.fillU == sprites[h].f.icon && dirY[i] == "Up"{
+                    dirY[i]="Down"
+                }
+                if sprites[i].f.fillD == sprites[h].f.icon && dirY[i] == "Down"{
+                    dirY[i]="Up"
+                }
+                if sprites[i].f.fillL == sprites[h].f.icon && dirX[i] == "Left"{
+                    dirX[i]="Right"
+                }
+                if sprites[i].f.fillR == sprites[h].f.icon && dirX[i] == "Right"{
+                    dirX[i]="Left"
+                }
+            }
+
+        //fmt.Print(dirX[i], dirY[i])
+        /* nullify movement if close to something */
+        /* make math.Mod() to numX numY format */
+
+            var res int
+            var xCanc, yCanc bool
+            for _, num:=range bufX {
+                //fut.x and num
+                //res := math.Mod(floatX, floatnum)
+                if fut.x > num {
+                    res = fut.x - num
+                } else if num > fut.x {
+                    res = num - fut.x
+                }
+
+                if num == sprites[i].fut.x {
+                    dirX[i] = dirX[i]
+                    xCanc = false
+                } else if res < 4 {
+                    //dirX[i] = "None"
+                    xCanc = true
+                }
+            }
+                //fmt.Print("X: ", floatX,floatnum,res)
+            for _, num:=range bufY {
+                //fut.y and num
+                //res := math.Mod(floatY, floatnum)
+                if fut.y > num {
+                    res = fut.y - num
+                } else if num > fut.y {
+                    res = num - fut.y
+                }
+
+                if num == sprites[i].fut.y {
+                    dirY[i] = dirY[i]
+                    yCanc = false
+                } else if res < 4 {
+                    //dirY[i] = "None"
+                    yCanc = true
+                }
+                //fmt.Print("Y: ", floatY,floatnum,res)
+            }
+            if xCanc == true && yCanc == true {
+                dirX[i] = "None"
+                dirY[i] = "None"
+            } else if xCanc == true && yCanc == false {
+                dirY[i] = dirY[i]
+                dirX[i] = "None"
+            } else if xCanc == false && yCanc == true {
+                dirX[i] = dirX[i]
+                dirY[i] = "None"
+            }
+
+
+        //fmt.Print(dirX[i], dirY[i])
+
+        /* nullify movement if check fails, character adjacent, or movement close */
+
+            if check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == true || check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == true {
+                dirX[i] = "None"
+            }
+            if check(sprites[i].fut.x, sprites[i].fut.y-1, sprites[i].f.fillU) == true || check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == true {
+                dirY[i] = "None"
+            }
+            if sprites[i].f.fillL == char.icon || sprites[i].f.fillR == char.icon {
+                dirX[i] = "None"
+            }
+            if sprites[i].f.fillD == char.icon || sprites[i].f.fillU == char.icon {
+                dirY[i] = "None"
+            }
+
+            var numX int
+            if sprites[i].fut.x > fut.x {
+                numX = sprites[i].fut.x - fut.x
+            } else if sprites[i].fut.x < fut.x {
+                numX = fut.x - sprites[i].fut.x
+            }
+
+
+            var numY int
+            if sprites[i].fut.y > fut.y {
+                numY = sprites[i].fut.y - fut.y
+            } else if sprites[i].fut.y < fut.y {
+                numY = fut.y - sprites[i].fut.y
+            }
+            if numY < 4  && numX < 4{
+                dirY[i] = "None"
+            }
+            if numX < 4 && numY < 4 {
+                dirX[i] = "None"
+            }
+
+        //fmt.Print(dirY[i], dirX[i])
+        if rn := svi.Random(0,2); dirY[i] != "None" && dirX[i] != "None" {
+            if rn == 0 {
+                dirY[i] = "None"
+            } else if rn == 1 {
+                dirX[i] = "None"
+            }
+        }
+
+
+        /* translate dirX[i] dirY[i] */
+
+            if dirX[i] == "Left" {
+                sprites[i].fut.x -=1
+            } else if dirX[i] == "Right" {
+                sprites[i].fut.x +=1
+            } else {
+                sprites[i].fut.x = sprites[i].fut.x
+            }
+            if dirY[i] == "Up" {
+                sprites[i].fut.y -=1
+            } else if dirY[i] == "Down" {
+                sprites[i].fut.y +=1
+            } else {
+                sprites[i].fut.y = sprites[i].fut.y
+            }
+
+            sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].fut.x, sprites[i].fut.y, sprites[i].f.icon, i)
+            sprites[i].pos.x, sprites[i].pos.y = sprites[i].fut.x, sprites[i].fut.y
     }
 }
 
 /* places a rune (pic) at coordinate (x,y) */
-func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
+func placeRune(x, y int, pic rune, spritenum int)(filler, fU, fL, fD, fR rune) {
     str := curroom[y]
     var newstr string
 
@@ -176,7 +331,13 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
     curroom[y] = newstr
 
     /* check for edge of the map */
-    posU, posL, posD, posR := (fut.y -1), (fut.x -1), (fut.y +1), (fut.x +1)
+    var posU, posL, posD, posR int
+    if pic == char.icon || spritenum == 99 {
+        posU, posL, posD, posR = (fut.y -1), (fut.x -1), (fut.y +1), (fut.x +1)
+    } else {
+        posU, posL, posD, posR = (sprites[spritenum].fut.y-1), (sprites[spritenum].fut.x-1), (sprites[spritenum].fut.y+1), (sprites[spritenum].fut.x+1)
+    }
+
     if posU < 0 {
         fU='⚠'
     } else {
@@ -184,8 +345,14 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
     		str = str[size:]
-            if i == fut.x {
-                fU=character
+            if pic == char.icon || spritenum == 99 {
+                if i == fut.x {
+                    fU=character
+                }
+            } else {
+                if i == sprites[spritenum].fut.x {
+                    fU=character
+                }
             }
         }
     }
@@ -197,8 +364,14 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
             str = str[size:]
-            if i == fut.x {
-                fD=character
+            if pic == char.icon || spritenum == 99 {
+                if i == fut.x {
+                    fD=character
+                }
+            } else {
+                if i == sprites[spritenum].fut.x {
+                    fD=character
+                }
             }
         }
     }
@@ -210,9 +383,9 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
             str = str[size:]
-            if i == posR {
-                fR=character
-            }
+                if i == posR {
+                    fR=character
+                }
         }
     }
     /* scan same line for left character */
@@ -223,9 +396,9 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
         for i:=0;len(str) > 0;i+=1 {
             character, size := utf8.DecodeRuneInString(str)
             str = str[size:]
-            if i == posL {
-                fL=character
-            }
+                if i == posL {
+                    fL=character
+                }
         }
     }
 
@@ -235,8 +408,9 @@ func placeRune(x, y int, pic rune)(filler, fU, fL, fD, fR rune) {
 /* checks for barricades at a given coordinate */
 func check(x, y int, aga rune)(occ bool) {
     str := curroom[y]
+    /* maybe re-do this to load from sprites[i].f.icon for more goodness */
     barricades := []rune{'═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
-         '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬'}
+         '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬', char.icon}
     for i:=0;len(str) > 0;i+=1 {
         _, size := utf8.DecodeRuneInString(str)
         str = str[size:]
@@ -244,7 +418,16 @@ func check(x, y int, aga rune)(occ bool) {
             for _, bar := range barricades {
                 if aga == bar {
                     occ = true
-                    break
+                    return
+                } else {
+                    occ = false
+                }
+            }
+            for i:=0;i<numsprites;i+=1 {
+                character:=sprites[i].f.icon
+                if aga == character || aga == char.icon{
+                    occ = true
+                    return
                 } else {
                     occ = false
                 }
@@ -318,24 +501,24 @@ func main() {
             case "o":
                 /* open doors */
                 if char.fillU == '-' {
-                    placeRune(pos.x,pos.y-1,'ˉ')
+                    placeRune(pos.x,pos.y-1,'ˉ', 99)
                 } else if char.fillU == 'ˉ' {
-                    placeRune(pos.x,pos.y-1,'-')
+                    placeRune(pos.x,pos.y-1,'-', 99)
                 }
                 if char.fillL == '|' {
-                    placeRune(pos.x-1,pos.y,'\\')
+                    placeRune(pos.x-1,pos.y,'\\', 99)
                 } else if char.fillL == '\\' {
-                    placeRune(pos.x-1,pos.y,'|')
+                    placeRune(pos.x-1,pos.y,'|', 99)
                 }
                 if char.fillD == '-' {
-                    placeRune(pos.x,pos.y+1,'_')
+                    placeRune(pos.x,pos.y+1,'_', 99)
                 } else if char.fillD == '_' {
-                    placeRune(pos.x,pos.y+1,'-')
+                    placeRune(pos.x,pos.y+1,'-', 99)
                 }
                 if char.fillR == '|' {
-                    placeRune(pos.x+1,pos.y,'/')
+                    placeRune(pos.x+1,pos.y,'/', 99)
                 } else if char.fillR == '/' {
-                    placeRune(pos.x+1,pos.y,'|')
+                    placeRune(pos.x+1,pos.y,'|', 99)
                 }
             case "i":
                 /* read inventory */
@@ -390,9 +573,9 @@ func main() {
                 }
             default:
         }
-        placeRune(pos.x, pos.y, char.fill)
-
-        char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon)
+        placeRune(pos.x, pos.y, char.fill, 99)
+        char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon, 99)
+        moveCreeps()
         printRoom()
         if s:=utf8.RuneCountInString(usrin); debugmode == false {
             fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
@@ -400,6 +583,10 @@ func main() {
         } else {
             fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR, usrin)
             clearln(30+7+s)
+            fmt.Printf("%c,%c,%c,%c",sprites[0].f.fillU,sprites[0].f.fillL,sprites[0].f.fillD,sprites[0].f.fillR)
+            clearln(7)
+            fmt.Printf("%c,%c,%c,%c",sprites[1].f.fillU, sprites[1].f.fillL, sprites[1].f.fillD, sprites[1].f.fillR)
+            clearln(7)
         }
         pos.x, pos.y = fut.x, fut.y
     }
