@@ -243,12 +243,27 @@ func moveCreeps() {
 
 		/* nullify movement if check fails, character adjacent, or movement close */
 
-		if check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == true || check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == true {
-			dirX[i] = "None"
+		if check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == true {
+            if dirX[i] == "Left" {
+                dirX[i] = "None"
+            }
 		}
-		if check(sprites[i].fut.x, sprites[i].fut.y-1, sprites[i].f.fillU) == true || check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == true {
-			dirY[i] = "None"
+        if check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == true {
+            if dirX[i] == "Right" {
+                dirX[i] = "None"
+            }
+        }
+		if check(sprites[i].fut.x, sprites[i].fut.y-1, sprites[i].f.fillU) == true {
+			if dirY[i] == "Up" {
+                dirY[i] = "None"
+            }
 		}
+        if check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == true {
+            if dirY[i] == "Down" {
+                dirY[i] = "None"
+            }
+        }
+        /* can only be one, thus non-specific checks are okay here */
 		if sprites[i].f.fillL == char.icon || sprites[i].f.fillR == char.icon {
 			dirX[i] = "None"
 		}
@@ -283,7 +298,7 @@ func moveCreeps() {
         determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
         check sprite[num].fut if num < sprites[i] (not sure if order is necessary
         if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
-        
+
         also need a way to keep sprites from sticking to walls when there are 2 in contact */
 
 		/* Pick a direction */
