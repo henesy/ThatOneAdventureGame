@@ -213,56 +213,6 @@ func moveCreeps() {
 			}
 		}
 
-		/* nullify movement if close to something */
-
-		var res int
-		var xCanc, yCanc bool
-		for _, num := range bufX {
-			//fut.x and num
-			//res := math.Mod(floatX, floatnum)
-			if fut.x > num {
-				res = fut.x - num
-			} else if num > fut.x {
-				res = num - fut.x
-			}
-
-			if num == sprites[i].fut.x {
-				dirX[i] = dirX[i]
-				xCanc = false
-			} else if res < 4 {
-				//dirX[i] = "None"
-				xCanc = true
-			}
-		}
-
-		for _, num := range bufY {
-			//fut.y and num
-			//res := math.Mod(floatY, floatnum)
-			if fut.y > num {
-				res = fut.y - num
-			} else if num > fut.y {
-				res = num - fut.y
-			}
-
-			if num == sprites[i].fut.y {
-				dirY[i] = dirY[i]
-				yCanc = false
-			} else if res < 4 {
-				//dirY[i] = "None"
-				yCanc = true
-			}
-		}
-		if xCanc == true && yCanc == true {
-			dirX[i] = "None"
-			dirY[i] = "None"
-		} else if xCanc == true && yCanc == false {
-			dirY[i] = dirY[i]
-			dirX[i] = "None"
-		} else if xCanc == false && yCanc == true {
-			dirX[i] = dirX[i]
-			dirY[i] = "None"
-		}
-
 		/* nullify movement if check fails, character adjacent, or movement close */
 		if sprites[i].fut.x-1 > 0 {
 			if check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == true {
@@ -314,6 +264,159 @@ func moveCreeps() {
 			edgeD = true
 		}
 
+		/* -!- Add a check for upper right or upper left (diagonals) -!- */
+		/*
+		   get coords -> check x+1,y+1;x-1,y-1;x+1,y-1;x-1,y+1 ->
+		   check against sprites[i].f.icon -> if x,y == [].icon ->
+		   determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
+		   check sprite[num].fut if num < sprites[i] (not sure if order is necessary
+		   if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
+		*/
+		/* -!- Might need to add storage for direction -!-*/
+		/* maybe move this segment backwards to be adjusted moreso later as to not move extraneously? */
+		for h := 0; h < numsprites; h += 1 {
+			if edgeU == false && edgeR == false {
+				if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirY[i] == "Up" {
+					dirY[i] = "Down"
+				}
+				if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirX[i] == "Right" {
+					dirX[i] = "Left"
+				}
+			}
+			if edgeU == false && edgeL == false {
+				if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirY[i] == "Up" {
+					dirY[i] = "Down"
+				}
+				if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirX[i] == "Left" {
+					dirX[i] = "Right"
+				}
+			}
+			if edgeD == false && edgeR == false {
+				if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirY[i] == "Down" {
+					dirY[i] = "Up"
+				}
+				if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirX[i] == "Right" {
+					dirX[i] = "Left"
+				}
+			}
+			if edgeD == false && edgeL == false {
+				if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirY[i] == "Down" {
+					dirY[i] = "Up"
+				}
+				if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirX[i] == "Left" {
+					dirX[i] = "Right"
+				}
+			}
+		}
+
+		for h:=0;h<numsprites;h+=1 {
+			altX := sprites[h].fut.x
+			altY := sprites[h].fut.y
+			botRx := sprites[i].fut.x+1
+			botRy := sprites[i].fut.y+1
+			botLx := sprites[i].fut.x-1
+			botLy := sprites[i].fut.y+1
+			topRx := sprites[i].fut.x-1
+			topRy := sprites[i].fut.y-1
+			topLx := sprites[i].fut.x+1
+			topLy := sprites[i].fut.y-1
+
+			fmt.Printf("ENTERED LOOP")
+			clearln(12)
+			if altX == botRx && altY == botRy {
+				if dirX[i] == "Right" {
+					dirX[i] = "Left"
+				}
+				if dirY[i] == "Down" {
+					dirY[i] = "Up"
+				}
+				fmt.Printf("First")
+				clearln(5)
+			}
+			if altX == botLx && altY == botLy {
+				if dirX[i] == "Left" {
+					dirX[i] = "Right"
+				}
+				if dirY[i] == "Down" {
+					dirY[i] = "Up"
+				}
+				fmt.Printf("Second")
+				clearln(6)
+			}
+			if altX == topRx && altY == topRy {
+				if dirX[i] == "Right" {
+					dirX[i] = "Left"
+				}
+				if dirY[i] == "Up" {
+					dirY[i] = "Down"
+				}
+				fmt.Printf("Third")
+				clearln(5)
+			}
+			if altX == topLx && altY == topLy {
+				if dirX[i] == "Left" {
+					dirX[i] = "Right"
+				}
+				if dirY[i] == "Up" {
+					dirY[i] = "Down"
+				}
+				fmt.Printf("Fourth")
+				clearln(6)
+			}
+
+		}
+
+		/* nullify movement if close to something */
+		var res int
+		var xCanc, yCanc bool
+		for _, num := range bufX {
+			//fut.x and num
+			//res := math.Mod(floatX, floatnum)
+			if fut.x > num {
+				res = fut.x - num
+			} else if num > fut.x {
+				res = num - fut.x
+			}
+
+			if num == sprites[i].fut.x {
+				dirX[i] = dirX[i]
+				xCanc = false
+			} else if res < 4 {
+				//dirX[i] = "None"
+				xCanc = true
+			}
+		}
+
+		for _, num := range bufY {
+			//fut.y and num
+			//res := math.Mod(floatY, floatnum)
+			if fut.y > num {
+				res = fut.y - num
+			} else if num > fut.y {
+				res = num - fut.y
+			}
+
+			if num == sprites[i].fut.y {
+				dirY[i] = dirY[i]
+				yCanc = false
+			} else if res < 4 {
+				//dirY[i] = "None"
+				yCanc = true
+			}
+		}
+		if xCanc == true && yCanc == true {
+			dirX[i] = "None"
+			dirY[i] = "None"
+		} else if xCanc == true && yCanc == false {
+			dirY[i] = dirY[i]
+			dirX[i] = "None"
+		} else if xCanc == false && yCanc == true {
+			dirX[i] = dirX[i]
+			dirY[i] = "None"
+		}
+
+
+
 		/* can only be one, thus non-specific checks are okay here */
 		if sprites[i].f.fillL == char.icon || sprites[i].f.fillR == char.icon {
 			dirX[i] = "None"
@@ -342,53 +445,6 @@ func moveCreeps() {
 			dirX[i] = "None"
 		}
 
-		/* -!- Add a check for upper right or upper left (diagonals) -!- */
-		/*
-		   get coords -> check x+1,y+1;x-1,y-1;x+1,y-1;x-1,y+1 ->
-		   check against sprites[i].f.icon -> if x,y == [].icon ->
-		   determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
-		   check sprite[num].fut if num < sprites[i] (not sure if order is necessary
-		   if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
-		*/
-		/* -!- Might need to add storage for direction -!-*/
-		/* maybe move this segment backwards to be adjusted moreso later as to not move extraneously? */
-		for h := 0; h < numsprites; h += 1 {
-			if edgeU == false && edgeR == false {
-				if char:=getChar(sprites[i].pos.x+1,sprites[i].pos.y-1); char == sprites[h].f.icon && dirY[i] == "Up" {
-					dirY[i] = "Down"
-				}
-				if char:=getChar(sprites[i].pos.x+1,sprites[i].pos.y-1); char == sprites[h].f.icon && dirX[i] == "Right" {
-					dirX[i] = "Left"
-				}
-			}
-			if edgeU == false && edgeL == false {
-				if char:=getChar(sprites[i].pos.x-1,sprites[i].pos.y-1); char == sprites[h].f.icon && dirY[i] == "Up" {
-					dirY[i] = "Down"
-				}
-				if char:=getChar(sprites[i].pos.x-1,sprites[i].pos.y-1); char == sprites[h].f.icon && dirX[i] == "Left" {
-					dirX[i] = "Right"
-				}
-			}
-			if edgeD == false && edgeR == false {
-				if char:=getChar(sprites[i].pos.x+1,sprites[i].pos.y+1); char == sprites[h].f.icon && dirY[i] == "Down" {
-					dirY[i] = "Up"
-				}
-				if char:=getChar(sprites[i].pos.x+1,sprites[i].pos.y+1); char == sprites[h].f.icon && dirX[i] == "Right" {
-					dirX[i] = "Left"
-				}
-			}
-			if edgeD == false && edgeL == false {
-				if char:=getChar(sprites[i].pos.x-1,sprites[i].pos.y+1); char == sprites[h].f.icon && dirY[i] == "Down" {
-					dirY[i] = "Up"
-				}
-				if char:=getChar(sprites[i].pos.x-1,sprites[i].pos.y+1); char == sprites[h].f.icon && dirX[i] == "Left" {
-					dirX[i] = "Right"
-				}
-			}
-
-
-
-		}
 
 		/* check for edge of map (how did this not get implemented earlier?) */
 		if sprites[i].f.fillU == '⚠' && dirY[i] == "Up" {
