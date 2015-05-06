@@ -3,13 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	sc "strconv"
 	"strings"
 	"svi"
 	"unicode/utf8"
-	//"math"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 /* current position in (x,y) of something in regards to the map's (x,y)
@@ -93,6 +92,7 @@ func setRoom(num string) {
 	/* extract data lines*/
 	count += 1 //23, but line #24
 	roomdata[0] = room[count]
+	/* MAYBE MAKE roomdata[0] something like POSITION COORDINATES */
 	if roomdata[0] == "Data:" {
 		count += 1 //24, but line #25
 		roomdata[1] = room[count]
@@ -137,6 +137,20 @@ func printRoom() {
 		extra := utf8.RuneCountInString(curroom[i])
 		clearln(extra)
 	}
+}
+
+/* returns the rune at a given position */
+func getChar(x, y int)(char rune) {
+	str := curroom[y]
+	var size int
+	for i:=0;i<len(curroom);i+=1 {
+		char, size = utf8.DecodeRuneInString(str)
+		if i == x {
+			break
+		}
+		str = str[size:]
+	}
+	return
 }
 
 /* set original position, futures, and fills for all sprites */
@@ -244,26 +258,26 @@ func moveCreeps() {
 		/* nullify movement if check fails, character adjacent, or movement close */
 
 		if check(sprites[i].fut.x-1, sprites[i].fut.y, sprites[i].f.fillL) == true {
-            if dirX[i] == "Left" {
-                dirX[i] = "None"
-            }
+			if dirX[i] == "Left" {
+				dirX[i] = "None"
+			}
 		}
-        if check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == true {
-            if dirX[i] == "Right" {
-                dirX[i] = "None"
-            }
-        }
+		if check(sprites[i].fut.x+1, sprites[i].fut.y, sprites[i].f.fillR) == true {
+			if dirX[i] == "Right" {
+				dirX[i] = "None"
+			}
+		}
 		if check(sprites[i].fut.x, sprites[i].fut.y-1, sprites[i].f.fillU) == true {
 			if dirY[i] == "Up" {
-                dirY[i] = "None"
-            }
+				dirY[i] = "None"
+			}
 		}
-        if check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == true {
-            if dirY[i] == "Down" {
-                dirY[i] = "None"
-            }
-        }
-        /* can only be one, thus non-specific checks are okay here */
+		if check(sprites[i].fut.x, sprites[i].fut.y+1, sprites[i].f.fillD) == true {
+			if dirY[i] == "Down" {
+				dirY[i] = "None"
+			}
+		}
+		/* can only be one, thus non-specific checks are okay here */
 		if sprites[i].f.fillL == char.icon || sprites[i].f.fillR == char.icon {
 			dirX[i] = "None"
 		}
@@ -291,15 +305,41 @@ func moveCreeps() {
 			dirX[i] = "None"
 		}
 
-        /* -!- Add a check for upper right or upper left (diagonals) -!- */
-        /*
-        get coords -> check x+1,y+1;x-1,y-1;x+1,y-1;x-1,y+1 ->
-        check against sprites[i].f.icon -> if x,y == [].icon ->
-        determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
-        check sprite[num].fut if num < sprites[i] (not sure if order is necessary
-        if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
-
-        also need a way to keep sprites from sticking to walls when there are 2 in contact */
+		/* -!- Add a check for upper right or upper left (diagonals) -!- */
+		/*
+		   get coords -> check x+1,y+1;x-1,y-1;x+1,y-1;x-1,y+1 ->
+		   check against sprites[i].f.icon -> if x,y == [].icon ->
+		   determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
+		   check sprite[num].fut if num < sprites[i] (not sure if order is necessary
+		   if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
+		*/
+		/* -!- Might need to add storage for direction -!-*/
+		for h := 0; h < numsprites; h += 1 {
+			if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirY[i] == "Up" {
+				dirY[i] = "Down"
+			}
+			if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirY[i] == "Up" {
+				dirY[i] = "Down"
+			}
+			if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirY[i] == "Down" {
+				dirY[i] = "Up"
+			}
+			if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirY[i] == "Down" {
+				dirY[i] = "Up"
+			}
+			if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirX[i] == "Right" {
+				dirX[i] = "Left"
+			}
+			if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirX[i] == "Right" {
+				dirX[i] = "Left"
+			}
+			if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirX[i] == "Left" {
+				dirX[i] = "Right"
+			}
+			if char:=getChar(sprites[i].fut.x-1,sprites[i].fut.y+1); char == sprites[h].f.icon && dirX[i] == "Left" {
+				dirX[i] = "Right"
+			}
+		}
 
 		/* Pick a direction */
 
@@ -475,7 +515,8 @@ func main() {
 	var b []byte = make([]byte, 1)
 	clearln(0)
 	setRoom("1")
-	pos.x, pos.y, fut.x, fut.y = 5, 1, 5, 1
+	pos.x, pos.y, fut.x, fut.y = 5, 1, 5, 1 //setting intial position
+	//pos.x, pos.y, fut.x, fut.y = //my future position baby
 	plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
 	var first bool = true
 
@@ -592,18 +633,18 @@ func main() {
 			} else {
 				debugmode = false
 			}
-        case "C":
-            /* clear screen (hard reset?) */
-            clearscrn()
-            printRoom()
-            continue
-        /* set case "H": to be a help screen in spirit of Inventory, must add command to make
-        a screen box and whatnot, perhaps push ncurses-replacement library derived from this PoC? */
+		case "C":
+			/* clear screen (hard reset?) */
+			clearscrn()
+			printRoom()
+			continue
+			/* set case "H": to be a help screen in spirit of Inventory, must add command to make
+			   a screen box and whatnot, perhaps push ncurses-replacement library derived from this PoC? */
 		default:
 		}
 
-        /* perform movement of sprites and player */
-        placeRune(pos.x, pos.y, char.fill, 99)
+		/* perform movement of sprites and player */
+		placeRune(pos.x, pos.y, char.fill, 99)
 		char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon, 99)
 		if other == 2 {
 			moveCreeps()
@@ -612,7 +653,7 @@ func main() {
 			other += 1
 		}
 
-        /* print the map and other such things, perhaps make this its own function */
+		/* print the map and other such things, perhaps make this its own function */
 		printRoom()
 		if s := utf8.RuneCountInString(usrin); debugmode == false {
 			fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
