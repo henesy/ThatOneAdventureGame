@@ -95,10 +95,14 @@ func setRoom(num string) {
 	/* MAYBE MAKE roomdata[0] something like POSITION COORDINATES */
 	if roomdata[0] == "Data:" {
 		count += 1 //24, but line #25
+		/* coordinates */
 		roomdata[1] = room[count]
-		num, _ := sc.Atoi(roomdata[1]) //the number 3
+		count +=1
+		/* number of sprites */
+		roomdata[2] = room[count]
+		num, _ := sc.Atoi(roomdata[2]) //the number 3
 		numsprites = num
-		for i := 2; i < (num + 2); i += 1 { //starting at 2, until we reach 4 (2,3,4)
+		for i := 3; i < (num + 3); i += 1 { //starting at 3, until we reach 5 (2,3,4)
 			count += 1 //25, but line #26
 			roomdata[i] = room[count]
 		}
@@ -106,7 +110,7 @@ func setRoom(num string) {
 		   roomdata[] starts at [2] for being relevant ([0] & [1] being 'Data:'' and '3') */
 		//var buf = make([]int, 5) //account for 3 plyr plus (x,y)
 		for j := 0; j < num; j += 1 {
-			str := roomdata[j+2] //starts at [2]
+			str := roomdata[j+3] //starts at [2]
 			newstr := strings.Split(str, ",")
 			sprites[j].f.icon, _ = utf8.DecodeRuneInString(newstr[0])
 			sprites[j].s.hlth, _ = sc.Atoi(newstr[1])
@@ -126,6 +130,9 @@ func setRoom(num string) {
 			sprites[j].f.fill = char
 
 		}
+		tmpstr := strings.Split(roomdata[1], ",")
+		pos.x, _ = sc.Atoi(tmpstr[0])
+		pos.y, _ = sc.Atoi(tmpstr[1])
 	}
 }
 
@@ -515,8 +522,9 @@ func main() {
 	var b []byte = make([]byte, 1)
 	clearln(0)
 	setRoom("1")
-	pos.x, pos.y, fut.x, fut.y = 5, 1, 5, 1 //setting intial position
+	//pos.x, pos.y, fut.x, fut.y = 5, 1, 5, 1 //setting intial position
 	//pos.x, pos.y, fut.x, fut.y = //my future position baby
+	fut.x, fut.y = pos.x, pos.y
 	plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
 	var first bool = true
 
