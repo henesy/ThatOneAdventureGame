@@ -168,7 +168,8 @@ func populateCreeps() {
 	}
 }
 
-/* decides movement for and sets sprites[i].fut.x,y for all sprites */
+/* decides movement for and sets sprites[i].fut.x,y for all sprites
+  ABANDON ALL HOPE, YE WHO ENTER THIS FUNCTION */
 func moveCreeps() {
 	bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
 	var edgeU, edgeD, edgeL, edgeR bool = false, false, false, false
