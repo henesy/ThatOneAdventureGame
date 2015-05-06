@@ -1,0 +1,52 @@
+The `barricades` []rune unicode rune variable array defines the list of "collision" walls.
+
+Ex.
+barricades := []rune{'═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
+    '-', '│', '┤', '┐', '└', '┴', '├', '─', '┬', char.icon}
+
+There is a difference between the vertical walls/horizontal dashes and the vertical pipes/dashes.
+
+----
+
+        Filler:
+░
+▒
+▓
+█
+▄
+▀
+■
+
+    Walls:
+╔
+╚
+╗
+╝
+╩
+╦
+╠
+╣
+╬
+═
+║
+┌
+└
+┐
+┘
+┴
+┬
+├
+┤
+┼
+─
+│
+
+    Closed Doors:
+-
+|
+
+    Open Doors:
+ˉ
+_
+\
+/

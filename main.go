@@ -81,7 +81,7 @@ func clearnum(num int) {
 /* reads room from a file then places the room strings into the curroom[] buf */
 func setRoom(num string) {
 	var count int
-	room, succ := svi.Filereader(num + ".room")
+	room, succ := svi.Filereader("./rooms/" + num + ".room")
 	if succ == 1 {
 		fmt.Print("ERROR READING ROOM FILE")
 	}
