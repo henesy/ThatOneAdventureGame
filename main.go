@@ -311,19 +311,12 @@ func moveCreeps() {
 		}
 
 		for h:=0;h<numsprites;h+=1 {
-			altX := sprites[h].fut.x
-			altY := sprites[h].fut.y
-			botRx := sprites[i].fut.x+1
-			botRy := sprites[i].fut.y+1
-			botLx := sprites[i].fut.x-1
-			botLy := sprites[i].fut.y+1
-			topRx := sprites[i].fut.x-1
-			topRy := sprites[i].fut.y-1
-			topLx := sprites[i].fut.x+1
-			topLy := sprites[i].fut.y-1
+			altX, altY := sprites[h].fut.x, sprites[h].fut.y
+			botRx, botRy := sprites[i].fut.x+1, sprites[i].fut.y+1
+			botLx, botLy := sprites[i].fut.x-1, sprites[i].fut.y+1
+			topRx, topRy := sprites[i].fut.x-1, sprites[i].fut.y-1
+			topLx, topLy := sprites[i].fut.x+1, sprites[i].fut.y-1
 
-			fmt.Printf("ENTERED LOOP")
-			clearln(12)
 			if altX == botRx && altY == botRy {
 				if dirX[i] == "Right" {
 					dirX[i] = "Left"
@@ -331,8 +324,6 @@ func moveCreeps() {
 				if dirY[i] == "Down" {
 					dirY[i] = "Up"
 				}
-				fmt.Printf("First")
-				clearln(5)
 			}
 			if altX == botLx && altY == botLy {
 				if dirX[i] == "Left" {
@@ -341,8 +332,6 @@ func moveCreeps() {
 				if dirY[i] == "Down" {
 					dirY[i] = "Up"
 				}
-				fmt.Printf("Second")
-				clearln(6)
 			}
 			if altX == topRx && altY == topRy {
 				if dirX[i] == "Right" {
@@ -351,8 +340,6 @@ func moveCreeps() {
 				if dirY[i] == "Up" {
 					dirY[i] = "Down"
 				}
-				fmt.Printf("Third")
-				clearln(5)
 			}
 			if altX == topLx && altY == topLy {
 				if dirX[i] == "Left" {
@@ -361,8 +348,6 @@ func moveCreeps() {
 				if dirY[i] == "Up" {
 					dirY[i] = "Down"
 				}
-				fmt.Printf("Fourth")
-				clearln(6)
 			}
 
 		}
@@ -500,8 +485,8 @@ func moveCreeps() {
 			sprites[i].fut.y = sprites[i].fut.y
 		}
 
-		fmt.Printf("Num: %d;%2d,%2d", i, sprites[i].fut.x, sprites[i].fut.y)
-		clearln(12)
+		//fmt.Printf("Num: %d;%2d,%2d", i, sprites[i].fut.x, sprites[i].fut.y)
+		//clearln(12)
 
 		sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].fut.x, sprites[i].fut.y, sprites[i].f.icon, i)
 		sprites[i].pos.x, sprites[i].pos.y = sprites[i].fut.x, sprites[i].fut.y
@@ -650,15 +635,14 @@ func main() {
 	char.icon, _ = utf8.DecodeRuneInString(icon_string)
 	char.fill = ' '
 	var b []byte = make([]byte, 1)
-	clearln(0)
+	clearscrn()
 	setRoom(roomnum)
-	//pos.x, pos.y, fut.x, fut.y = 5, 1, 5, 1 //setting intial position
-	//pos.x, pos.y, fut.x, fut.y = //my future position baby
 	fut.x, fut.y = pos.x, pos.y
 	plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
-	var first bool = true
 
-	var other int = 0
+	/* begin game loop */
+	var first bool = true
+	var creep_move_cnt int = 0
 	for string([]byte(b)[0]) != "q" {
 		if first == false {
 			os.Stdin.Read(b)
@@ -784,11 +768,12 @@ func main() {
 		/* perform movement of sprites and player */
 		placeRune(pos.x, pos.y, char.fill, 99)
 		char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon, 99)
-		if other == 2 {
+		/* creeps move every 4 turns */
+		if creep_move_cnt == 3 {
 			moveCreeps()
-			other = 0
+			creep_move_cnt = 0
 		} else {
-			other += 1
+			creep_move_cnt += 1
 		}
 
 		/* print the map and other such things, perhaps make this its own function then goroutine it */
