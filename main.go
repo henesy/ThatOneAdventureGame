@@ -283,7 +283,8 @@ func moveCreeps() {
         determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
         check sprite[num].fut if num < sprites[i] (not sure if order is necessary
         if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
-        */
+        
+        also need a way to keep sprites from sticking to walls when there are 2 in contact */
 
 		/* Pick a direction */
 
@@ -576,9 +577,18 @@ func main() {
 			} else {
 				debugmode = false
 			}
+        case "C":
+            /* clear screen (hard reset?) */
+            clearscrn()
+            printRoom()
+            continue
+        /* set case "H": to be a help screen in spirit of Inventory, must add command to make
+        a screen box and whatnot, perhaps push ncurses-replacement library derived from this PoC? */
 		default:
 		}
-		placeRune(pos.x, pos.y, char.fill, 99)
+
+        /* perform movement of sprites and player */
+        placeRune(pos.x, pos.y, char.fill, 99)
 		char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon, 99)
 		if other == 2 {
 			moveCreeps()
@@ -587,7 +597,8 @@ func main() {
 			other += 1
 		}
 
-		go printRoom()
+        /* print the map and other such things, perhaps make this its own function */
+		printRoom()
 		if s := utf8.RuneCountInString(usrin); debugmode == false {
 			fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
 			clearln(19)
