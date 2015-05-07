@@ -9,6 +9,7 @@ import (
 	"svi"
 	"unicode/utf8"
 	"golang.org/x/crypto/ssh/terminal"
+	"io/ioutil"
 )
 
 /* current position in (x,y) of something in regards to the map's (x,y)
@@ -43,7 +44,7 @@ type sprite struct {
 	s   statistics
 }
 
-var height, width int /* terminal height/width */
+var height, width, numrooms int /* terminal height/width; number of room files (rooms) */
 var curroom = make([]string, 23)
 var roomdata = make([]string, 23)
 var numsprites int
@@ -137,7 +138,7 @@ func setRoom(num string) {
 	}
 
 	str:=curroom[pos.y]
-	for i:=0;i<23;i+=1 {
+	for i:=0;i<79;i+=1 {
 		character, size := utf8.DecodeRuneInString(str)
 		if i == pos.x {
 			char.fill = character
@@ -169,8 +170,8 @@ func printStats(key string, usrin ...string) {
 		clearln(21 + tots)
 	} else {
 			ws:=utf8.RuneCountInString(key)
-			fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR, key)
-			clearln(30 + 7 + ws)
+			fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fill, char.fillU, char.fillL, char.fillD, char.fillR, key)
+			clearln(30 + 9 + ws)
 	}
 }
 
@@ -685,6 +686,10 @@ func main() {
 	char.fill = ' '
 	var b []byte = make([]byte, 1)
 	clearscrn()
+
+	/* set some initial values, get the number of room/map files we'll be playing with */
+	dir, _ := ioutil.ReadDir("./rooms")
+	numrooms = len(dir)
 	setRoom(roomnum)
 	plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
 
@@ -829,8 +834,7 @@ func main() {
 				} else {
 					message = "Teleporting up!"
 					num, _=sc.Atoi(roomnum)
-					/* 5 should be replaceable with a method that reads/ls's the num of .room files in folder (items in folder?) */
-					if num + 1 < 5 {
+					if num < numrooms {
 						num+=1
 						roomnum = sc.Itoa(num)
 						setRoom(roomnum)
