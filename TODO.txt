@@ -1,0 +1,12 @@
+Technical:
+convert all dir*[]'s to const(iota) values up top
+perhaps condense the player variables into one stack (but clutter?)
+maybe add more pointers?
+
+Functional:
+random map generator (separate program?)
+random level selection
+multiple movement/aggression profiles
+saving maps/states/variables and whatnot
+make a functioning inventory
+
