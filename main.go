@@ -52,6 +52,7 @@ var pos, fut position
 var char fillers
 var plyr statistics
 var debugmode bool = false
+var message string
 
 /* -- end variables -- */
 
@@ -134,6 +135,16 @@ func setRoom(num string) {
 		pos.x, _ = sc.Atoi(tmpstr[0])
 		pos.y, _ = sc.Atoi(tmpstr[1])
 	}
+
+	str:=curroom[pos.y]
+	for i:=0;i<23;i+=1 {
+		character, size := utf8.DecodeRuneInString(str)
+		if i == pos.x {
+			char.fill = character
+		}
+		str=str[size:]
+	}
+	fut.x, fut.y = pos.x, pos.y //set initial position and reset fut.*
 }
 
 /* prints the curroom[] buf to screen */
@@ -143,6 +154,23 @@ func printRoom() {
 		/* clearing in case the map doesn't fill the standard 23x80 width */
 		extra := utf8.RuneCountInString(curroom[i])
 		clearln(extra)
+	}
+}
+
+/* prints player stats and some debug messages if enabled q*/
+func printStats(key string, usrin ...string) {
+	if tots := 0; debugmode == false {
+		fmt.Printf("Stats: %c%2d %c %2d %c%2d; ", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
+		for _, words := range usrin {
+			s := utf8.RuneCountInString(words)
+			fmt.Printf("%s", words)
+			tots += s
+		}
+		clearln(21 + tots)
+	} else {
+			ws:=utf8.RuneCountInString(key)
+			fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR, key)
+			clearln(30 + 7 + ws)
 	}
 }
 
@@ -621,8 +649,8 @@ func check(x, y int, aga rune) (occ bool) {
 }
 
 func main() {
-	var icon_string string //👱
-	var roomnum string
+	var icon_string, roomnum string //👱
+	var reset_message bool = true
 	flag.StringVar(&roomnum, "room", "1", "Set the initial room to begin the game in")
 	flag.StringVar(&icon_string, "icon", "♔", "Set unicode character to use as player icon")
 	flag.IntVar(&height, "height", 24, "Set height of terminal screen [24]")
@@ -637,7 +665,6 @@ func main() {
 	var b []byte = make([]byte, 1)
 	clearscrn()
 	setRoom(roomnum)
-	fut.x, fut.y = pos.x, pos.y
 	plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
 
 	/* begin game loop */
@@ -759,9 +786,42 @@ func main() {
 			/* clear screen (hard reset?) */
 			clearscrn()
 			printRoom()
+			printStats(usrin, message)
 			continue
 			/* set case "H": to be a help screen in spirit of Inventory, must add command to make
 			   a screen box and whatnot, perhaps push ncurses-replacement library derived from this PoC? */
+		case "<", ">":
+			num:=1
+			if char.fill == 'Ɵ' {
+				if usrin == "<" {
+					message = "Teleporting down!"
+					num, _ =sc.Atoi(roomnum)
+					if num - 1 > 0 {
+						num-=1
+						roomnum = sc.Itoa(num)
+						setRoom(roomnum)
+						first=true
+						continue
+					} else {
+						message = "You are at the lowest level."
+					}
+				} else {
+					message = "Teleporting up!"
+					num, _=sc.Atoi(roomnum)
+					/* 5 should be replaceable with a method that reads/ls's the num of .room files in folder (items in folder?) */
+					if num + 1 < 5 {
+						num+=1
+						roomnum = sc.Itoa(num)
+						setRoom(roomnum)
+						first=true
+						continue
+					} else {
+						message = "You are at the lowest level."
+					}
+				}
+			} else {
+				message = "You can't teleport here."
+			}
 		default:
 		}
 
@@ -778,16 +838,9 @@ func main() {
 
 		/* print the map and other such things, perhaps make this its own function then goroutine it */
 		printRoom()
-		if s := utf8.RuneCountInString(usrin); debugmode == false {
-			fmt.Printf("Stats: %c%2d %c %2d %c%2d", '♥', plyr.hlth, '🔥', plyr.atk, '⚔', plyr.dfs)
-			clearln(19)
-		} else {
-			fmt.Printf("Position: %2d,%2d; ULDR: %c,%c,%c,%c; Key: %s", fut.x, fut.y, char.fillU, char.fillL, char.fillD, char.fillR, usrin)
-			clearln(30 + 7 + s)
-			fmt.Printf("%c,%c,%c,%c", sprites[0].f.fillU, sprites[0].f.fillL, sprites[0].f.fillD, sprites[0].f.fillR)
-			clearln(7)
-			fmt.Printf("%c,%c,%c,%c", sprites[1].f.fillU, sprites[1].f.fillL, sprites[1].f.fillD, sprites[1].f.fillR)
-			clearln(7)
+		printStats(usrin, message)
+		if reset_message == true {
+			message = ""
 		}
 		pos.x, pos.y = fut.x, fut.y
 	}
