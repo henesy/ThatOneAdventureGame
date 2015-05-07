@@ -1,0 +1,8 @@
+Movement is controlled with the standard `wasd` format.
+
+Other controls:
+`o`: open or close doors (doors are one-way directional in opening profile)
+`<`: teleport down on a portal
+`>`: teleport up on a portal
+`i`: display inventory
+`C`: clear the screen
