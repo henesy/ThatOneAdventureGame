@@ -150,6 +150,11 @@ func setRoom(num string) {
 
 /* prints the curroom[] buf to screen */
 func printRoom() {
+	if height > 24 {
+		for i:=0;i<(height-24);i+=1 {
+			clearln(0)
+		}
+	}
 	for i := 0; i < len(curroom); i += 1 {
 		fmt.Printf("%s", curroom[i])
 		/* clearing in case the map doesn't fill the standard 23x80 width */
@@ -672,15 +677,19 @@ func check(x, y int, aga rune) (occ bool) {
 
 func main() {
 	var icon_string, roomnum string //👱
-	var reset_message bool = true
+	var reset_message, auto_resize bool = true, false
 	flag.StringVar(&roomnum, "room", "1", "Set the initial room to begin the game in")
 	flag.StringVar(&icon_string, "icon", "♔", "Set unicode character to use as player icon")
+	flag.BoolVar(&auto_resize, "comp", false, "Automatically compensate for larger terminals [24x80 min]")
 	flag.IntVar(&height, "height", 24, "Set height of terminal screen [24]")
 	flag.IntVar(&width, "width", 80, "Set width of terminal screen [80]")
 	flag.Parse()
 
 	oldState, _ := terminal.MakeRaw(0)
 	defer terminal.Restore(0, oldState)
+	if 	poss_w, poss_h, _ := terminal.GetSize(0); auto_resize == true {
+		height, width = poss_h, poss_w
+	}
 
 	char.icon, _ = utf8.DecodeRuneInString(icon_string)
 	char.fill = ' '
