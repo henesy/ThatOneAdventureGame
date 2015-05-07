@@ -340,6 +340,7 @@ func moveCreeps() {
 
 		for h:=0;h<numsprites;h+=1 {
 			altX, altY := sprites[h].fut.x, sprites[h].fut.y
+			x, y := sprites[i].fut.x, sprites[i].fut.y
 			botRx, botRy := sprites[i].fut.x+1, sprites[i].fut.y+1
 			botLx, botLy := sprites[i].fut.x-1, sprites[i].fut.y+1
 			topRx, topRy := sprites[i].fut.x-1, sprites[i].fut.y-1
@@ -377,7 +378,27 @@ func moveCreeps() {
 					dirY[i] = "Down"
 				}
 			}
-
+			/* check for `under and over it~` 5fdp yo */
+			if altY == y+1 && altX == x {
+				if dirY[i] == "Down" {
+					dirY[i] = "Up"
+				}
+			}
+			if altY == y-1 && altX == x {
+				if dirY[i] == "Up" {
+					dirY[i] = "Down"
+				}
+			}
+			if altY == y && altX == x+1 {
+				if dirX[i] == "Right" {
+					dirX[i] = "Left"
+				}
+			}
+			if altY == y && altX == x-1 {
+				if dirX[i] == "Left" {
+					dirX[i] = "Right"
+				}
+			}
 		}
 
 		/* nullify movement if close to something */
@@ -816,7 +837,7 @@ func main() {
 						first=true
 						continue
 					} else {
-						message = "You are at the lowest level."
+						message = "You are at the highest level."
 					}
 				}
 			} else {
