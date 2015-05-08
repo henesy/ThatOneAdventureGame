@@ -22,6 +22,15 @@ const (
 	NONE
 )
 
+
+/* item id's */
+type ident int
+const (
+	EMPTY ident = iota
+	ROCK
+	TORCH
+)
+
 /* current position in (x,y) of something in regards to the map's (x,y)
 (perhaps expand to become (x,y,z)? to account for levels?) */
 type position struct {
@@ -46,6 +55,59 @@ type statistics struct {
 	dfs  int
 }
 
+/* item struct, stats then value */
+type item struct {
+	icon rune
+	id ident
+}
+
+/* methods for items */
+func (it item) getDesc()(desc string) {
+	switch it.id {
+		case ROCK: desc = "A rock. It's pimpin."
+		case TORCH:
+	}
+	return
+}
+
+func (it item) getValue()(val int) {
+	return
+}
+
+/* inventory struct for storage and tracking */
+const max_inventory = 50
+type inventory struct {
+	num int
+	size int /* must be `<=` slot's cap */
+	slot [max_inventory]item
+}
+
+/* inventory methods */
+func (inv inventory) Remove(num int) {
+	backpacking:=false
+	if inv == backpack {
+		backpacking=true
+	}
+	if num-1 <= 0 {
+		inv.slot[num].icon='⚠'
+		inv.slot[num].id=EMPTY
+	} else {
+		for i:=0;i<inv.num;i+=1 {
+			if i+1 >= inv.size {
+				inv.slot[num+i].icon='⚠'
+				inv.slot[num+i].id=EMPTY
+			} else {
+				inv.slot[num+i].icon = inv.slot[num+i+1].icon
+				inv.slot[num+i].id = inv.slot[num+i+1].id
+			}
+		}
+	}
+	inv.num = inv.num - 1
+	if backpacking == true {
+		backpack=inv
+	}
+}
+
 /* basic sprite meta-struct */
 type sprite struct {
 	pos position
@@ -62,6 +124,7 @@ var sprites = make([]sprite, 21)
 var pos, fut position
 var char fillers
 var plyr statistics
+var backpack inventory
 var debugmode bool = false
 var message string
 
@@ -156,6 +219,13 @@ func setRoom(num string) {
 		str=str[size:]
 	}
 	fut.x, fut.y = pos.x, pos.y //set initial position and reset fut.*
+}
+
+/* does the standard print routine used in main() without moving/interfering with anything */
+func onlyPrint(usrin string) {
+	clearscrn()
+	printRoom()
+	printStats(usrin, message)
 }
 
 /* prints the curroom[] buf to screen */
@@ -652,6 +722,11 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 	return
 }
 
+/* checks if the target location contains an interactable item or not */
+func checkItem() {
+
+}
+
 /* checks for barricades at a given coordinate */
 func check(x, y int, aga rune) (occ bool) {
 		str := curroom[y]
@@ -687,7 +762,7 @@ func check(x, y int, aga rune) (occ bool) {
 
 func main() {
 	var icon_string, roomnum string //👱
-	var reset_message, auto_resize bool = true, false
+	var reset_message, auto_resize, playing bool = true, false, true
 	flag.StringVar(&roomnum, "room", "1", "Set the initial room to begin the game in")
 	flag.StringVar(&icon_string, "icon", "♔", "Set unicode character to use as player icon")
 	flag.BoolVar(&auto_resize, "comp", false, "Automatically compensate for larger terminals [24x80 min]")
@@ -711,11 +786,12 @@ func main() {
 	numrooms = len(dir)
 	setRoom(roomnum)
 	plyr.hlth, plyr.atk, plyr.dfs = 10, 02, 02
+	backpack.num, backpack.size, backpack.slot[0].icon, backpack.slot[0].id = 1, 12, '*', ROCK
 
 	/* begin game loop */
 	var first bool = true
 	var creep_move_cnt int = 0
-	for string([]byte(b)[0]) != "q" {
+	for playing == true {
 		if first == false {
 			os.Stdin.Read(b)
 		} else {
@@ -726,147 +802,212 @@ func main() {
 		usrin := string([]byte(b)[0])
 
 		switch usrin {
-		case "w":
-			if char.fillU != '⚠' && (check(pos.x, pos.y-1, char.fillU) == false) {
-				fut.y -= 1
-				if fut.y < 0 {
-					fut.y += 1
-				}
-			}
-		case "a":
-			if char.fillL != '⚠' && (check(pos.x-1, pos.y, char.fillL) == false) {
-				fut.x -= 1
-				if fut.x < 0 {
-					fut.x += 1
-				}
-			}
-		case "s":
-			if char.fillD != '⚠' && (check(pos.x, pos.y+1, char.fillD) == false) {
-				fut.y += 1
-				if fut.y > 22 {
+			case "w":
+				if char.fillU != '⚠' && (check(pos.x, pos.y-1, char.fillU) == false) {
 					fut.y -= 1
+					if fut.y < 0 {
+						fut.y += 1
+					}
 				}
-			}
-		case "d":
-			if char.fillR != '⚠' && (check(pos.x+1, pos.y, char.fillR) == false) {
-				fut.x += 1
-				if fut.x > 79 {
+			case "a":
+				if char.fillL != '⚠' && (check(pos.x-1, pos.y, char.fillL) == false) {
 					fut.x -= 1
+					if fut.x < 0 {
+						fut.x += 1
+					}
 				}
-			}
-		case "o":
-			/* open doors */
-			if char.fillU == '-' {
-				placeRune(pos.x, pos.y-1, 'ˉ', 99)
-			} else if char.fillU == 'ˉ' {
-				placeRune(pos.x, pos.y-1, '-', 99)
-			}
-			if char.fillL == '|' {
-				placeRune(pos.x-1, pos.y, '\\', 99)
-			} else if char.fillL == '\\' {
-				placeRune(pos.x-1, pos.y, '|', 99)
-			}
-			if char.fillD == '-' {
-				placeRune(pos.x, pos.y+1, '_', 99)
-			} else if char.fillD == '_' {
-				placeRune(pos.x, pos.y+1, '-', 99)
-			}
-			if char.fillR == '|' {
-				placeRune(pos.x+1, pos.y, '/', 99)
-			} else if char.fillR == '/' {
-				placeRune(pos.x+1, pos.y, '|', 99)
-			}
-		case "i":
-			/* read inventory */
-			clearscrn()
-			fmt.Print("╔")
-			for i := 0; i < width-2; i += 1 {
-				fmt.Print("═")
-			}
-			fmt.Print("╗")
-			fmt.Print("║")
-			for i := 0; i < 33; i += 1 {
-				fmt.Print(" ")
-			}
-			fmt.Print("║ Backpack ║")
-			for i := 0; i < 33; i += 1 {
-				fmt.Print(" ")
-			}
-			fmt.Print("║")
-			fmt.Print("║")
-			for i := 0; i < 33; i += 1 {
-				fmt.Print(" ")
-			}
-			fmt.Print("╚")
-			for i := 0; i < 10; i += 1 {
-				fmt.Print("═")
-			}
-			fmt.Print("╝")
-			for i := 0; i < 33; i += 1 {
-				fmt.Print(" ")
-			}
-			fmt.Print("║")
-			/* body of inventory */
-			for i := 0; i < height-5; i += 1 {
+			case "s":
+				if char.fillD != '⚠' && (check(pos.x, pos.y+1, char.fillD) == false) {
+					fut.y += 1
+					if fut.y > 22 {
+						fut.y -= 1
+					}
+				}
+			case "d":
+				if char.fillR != '⚠' && (check(pos.x+1, pos.y, char.fillR) == false) {
+					fut.x += 1
+					if fut.x > 79 {
+						fut.x -= 1
+					}
+				}
+			case "q":
+				message = "Really quit?: "
+				onlyPrint(usrin)
+				os.Stdin.Read(b)
+				tmpwords := string([]byte(b)[0])
+				if tmpwords == "q" {
+					playing=false
+				} else {
+					message = "Not like you had anything better to do!"
+					onlyPrint(tmpwords)
+				}
+				continue
+			case "o":
+				/* open doors */
+				if char.fillU == '-' {
+					placeRune(pos.x, pos.y-1, 'ˉ', 99)
+				} else if char.fillU == 'ˉ' {
+					placeRune(pos.x, pos.y-1, '-', 99)
+				}
+				if char.fillL == '|' {
+					placeRune(pos.x-1, pos.y, '\\', 99)
+				} else if char.fillL == '\\' {
+					placeRune(pos.x-1, pos.y, '|', 99)
+				}
+				if char.fillD == '-' {
+					placeRune(pos.x, pos.y+1, '_', 99)
+				} else if char.fillD == '_' {
+					placeRune(pos.x, pos.y+1, '-', 99)
+				}
+				if char.fillR == '|' {
+					placeRune(pos.x+1, pos.y, '/', 99)
+				} else if char.fillR == '/' {
+					placeRune(pos.x+1, pos.y, '|', 99)
+				}
+			case "i":
+				/* read inventory */
+				clearscrn()
+				fmt.Print("╔")
+				for i := 0; i < width-2; i += 1 {
+					fmt.Print("═")
+				}
+				fmt.Print("╗")
 				fmt.Print("║")
-				clearln(2)
+				for i := 0; i < 33; i += 1 {
+					fmt.Print(" ")
+				}
+				fmt.Print("║ Backpack ║")
+				for i := 0; i < 33; i += 1 {
+					fmt.Print(" ")
+				}
 				fmt.Print("║")
-			}
-			/* end body of inventory */
-			fmt.Print("╚")
-			for i := 0; i < width-2; i += 1 {
-				fmt.Print("═")
-			}
-			fmt.Print("╝")
-			clearln(0)
-			fmt.Scanln()
-		case "D":
-			/* debug mode */
-			if debugmode == false {
-				debugmode = true
-			} else {
-				debugmode = false
-			}
-		case "C":
-			/* clear screen (hard reset?) */
-			clearscrn()
-			printRoom()
-			printStats(usrin, message)
-			continue
-			/* set case "H": to be a help screen in spirit of Inventory, must add command to make
-			   a screen box and whatnot, perhaps push ncurses-replacement library derived from this PoC? */
-		case "<", ">":
-			num:=1
-			if char.fill == 'Ɵ' {
-				if usrin == "<" {
-					message = "Teleporting down!"
-					num, _ =sc.Atoi(roomnum)
-					if num - 1 > 0 {
-						num-=1
-						roomnum = sc.Itoa(num)
-						setRoom(roomnum)
-						first=true
-						continue
+				fmt.Print("║")
+				for i := 0; i < 33; i += 1 {
+					fmt.Print(" ")
+				}
+				fmt.Print("╚")
+				for i := 0; i < 10; i += 1 {
+					fmt.Print("═")
+				}
+				fmt.Print("╝")
+				for i := 0; i < 33; i += 1 {
+					fmt.Print(" ")
+				}
+				fmt.Print("║")
+				/* body of inventory */
+				h:=0
+				for i := 0; i < height-5; i += 1 {
+					if h < backpack.num {
+						// get description based on const?
+						str:=backpack.slot[h].getDesc()
+						size:=utf8.RuneCountInString(str)
+						fmt.Print("║")
+						fmt.Printf("%2d) '%c': \"%s\"", h+1, backpack.slot[h].icon, str)
+						//fmt.Print(str)
+						clearln(size+2+11)
+						fmt.Print("║")
+						h+=1
 					} else {
-						message = "You are at the lowest level."
+						fmt.Print("║")
+						clearln(2)
+						fmt.Print("║")
+					}
+				}
+				/* end body of inventory */
+				fmt.Print("╚")
+				for i := 0; i < width-2; i += 1 {
+					fmt.Print("═")
+				}
+				fmt.Print("╝")
+				clearln(0)
+				fmt.Scanln()
+			case "p":
+				/* pickup command */
+			case "P":
+				/* put command (from inventory) */
+					message = "Put which item?: "
+					onlyPrint(usrin)
+					os.Stdin.Read(b)
+					tmpwords := string([]byte(b)[0])
+					tmpnum, err := sc.Atoi(tmpwords)
+					if err == nil {
+						//tmpnum -= 1
+						//fmt.Print(tmpnum)
+						if tmpnum > backpack.num {
+							message="You don't have that many items."
+							onlyPrint(tmpwords)
+						} else if tmpnum < 0 {
+							message="Negative items don't exist."
+							onlyPrint(tmpwords)
+						} else {
+							if backpack.num > 0 {
+								/* set direction before this point eventually... */
+								/* probably want a checkItem() fxn w/ extended barricades[] for "stuff" (interactables) */
+								if check(fut.x-1, fut.y, char.fillL) == false {
+									message="Item placed!"
+									placeRune(fut.x-1,fut.y,backpack.slot[tmpnum-1].icon,99)
+									backpack.Remove(tmpnum-1)
+									onlyPrint(tmpwords)
+								} else {
+									message="Can't place there!"
+									onlyPrint(tmpwords)
+								}
+							} else {
+								message="No items in your inventory!"
+								onlyPrint(tmpwords)
+							}
+						}
+					} else {
+						message="That's not a number!"
+						onlyPrint(tmpwords)
+					}
+					continue
+			case "D":
+				/* debug mode */
+				if debugmode == false {
+					debugmode = true
+				} else {
+					debugmode = false
+				}
+			case "C":
+				/* clear screen (hard reset?) */
+				onlyPrint(usrin)
+				continue
+			case "H":
+				/* set case "H": to be a help screen in spirit of Inventory, must add command to make
+				a screen box and whatnot, perhaps push ncurses-replacement library derived from this PoC? */
+			case "<", ">":
+				num:=1
+				if char.fill == 'Ɵ' {
+					if usrin == "<" {
+						message = "Teleporting down!"
+						num, _ =sc.Atoi(roomnum)
+						if num - 1 > 0 {
+							num-=1
+							roomnum = sc.Itoa(num)
+							setRoom(roomnum)
+							first=true
+							continue
+						} else {
+							message = "You are at the lowest level."
+						}
+					} else {
+						message = "Teleporting up!"
+						num, _=sc.Atoi(roomnum)
+						if num < numrooms {
+							num+=1
+							roomnum = sc.Itoa(num)
+							setRoom(roomnum)
+							first=true
+							continue
+						} else {
+							message = "You are at the highest level."
+						}
 					}
 				} else {
-					message = "Teleporting up!"
-					num, _=sc.Atoi(roomnum)
-					if num < numrooms {
-						num+=1
-						roomnum = sc.Itoa(num)
-						setRoom(roomnum)
-						first=true
-						continue
-					} else {
-						message = "You are at the highest level."
-					}
+					message = "You can't teleport here."
 				}
-			} else {
-				message = "You can't teleport here."
-			}
-		default:
+			default:
 		}
 
 		/* perform movement of sprites and player */
