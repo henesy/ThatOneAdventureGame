@@ -27,6 +27,7 @@ const (
 type ident int
 const (
 	EMPTY ident = iota
+	UNKNOWN
 	ROCK
 	TORCH
 )
@@ -59,6 +60,7 @@ type statistics struct {
 type item struct {
 	icon rune
 	id ident
+	fill rune
 }
 
 /* methods for items */
@@ -70,9 +72,11 @@ func (it item) getDesc()(desc string) {
 	return
 }
 
+/* get "selling" value of item */
 func (it item) getValue()(val int) {
 	return
 }
+
 
 /* inventory struct for storage and tracking */
 const max_inventory = 50
@@ -83,30 +87,32 @@ type inventory struct {
 }
 
 /* inventory methods */
-func (inv inventory) Remove(num int) {
-	backpacking:=false
-	if inv == backpack {
-		backpacking=true
-	}
-	if num-1 <= 0 {
-		inv.slot[num].icon='⚠'
-		inv.slot[num].id=EMPTY
-	} else {
-		for i:=0;i<inv.num;i+=1 {
-			if i+1 >= inv.size {
-				inv.slot[num+i].icon='⚠'
-				inv.slot[num+i].id=EMPTY
-			} else {
-				inv.slot[num+i].icon = inv.slot[num+i+1].icon
-				inv.slot[num+i].id = inv.slot[num+i+1].id
+/* remove item from inventory; num is the actual array position */
+func (inv *inventory) remove(num int) {
+	if num < inv.size {
+		for i:=num;i<inv.size;i+=1 {
+				inv.slot[i].icon = inv.slot[i+1].icon
+				inv.slot[i].id = inv.slot[i+1].id
 			}
-		}
 	}
 	inv.num = inv.num - 1
-	if backpacking == true {
-		backpack=inv
+}
+
+/* set item id and icon and fill */
+func (inv *inventory) add(icon rune) {
+	/* perhaps add an else and form of return which states no more space */
+	if num:=inv.num; inv.num+1 < inv.size {
+		inv.num+=1
+		inv.slot[num].icon = icon
+		switch icon {
+			case '*':
+				inv.slot[num].id = ROCK
+			default:
+				inv.slot[num].id = UNKNOWN
+		}
 	}
 }
+
 
 /* basic sprite meta-struct */
 type sprite struct {
@@ -723,13 +729,54 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 }
 
 /* checks if the target location contains an interactable item or not */
-func checkItem() {
+func checkItem(x, y int)(occ bool) {
+	str:=curroom[y]
+	constructions := []rune{'Ɵ'}
+	blocked := check(x, y, getChar(x,y))
+	if blocked == true {
+		occ=false
+	} else {
+		for i:=0;len(str) > 0;i+=1 {
+			schar, size := utf8.DecodeRuneInString(str)
+			str = str[size:]
+			if i == x {
+				for _, cchar := range constructions {
+					if schar == cchar {
+						occ=true
+					}
+				}
+			}
+		}
+	}
+	return
+}
 
+/* check for background shit */
+func checkBack(x, y int)(occ bool) {
+	str:=curroom[y]
+	constructions := []rune{' ', '░'}
+	blocked := check(x, y, getChar(x,y))
+	if blocked == true {
+		occ=false
+	} else {
+		for i:=0;len(str) > 0;i+=1 {
+			schar, size := utf8.DecodeRuneInString(str)
+			str = str[size:]
+			if i == x {
+				for _, cchar := range constructions {
+					if schar == cchar {
+						occ=true
+					}
+				}
+			}
+		}
+	}
+	return
 }
 
 /* checks for barricades at a given coordinate */
 func check(x, y int, aga rune) (occ bool) {
-		str := curroom[y]
+	str := curroom[y]
 	/* maybe re-do this to load from sprites[i].f.icon for more goodness */
 	barricades := []rune{'═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
 		'-', '│', '┤', '┐', '└', '┴', '├', '─', '┬', char.icon}
@@ -923,6 +970,33 @@ func main() {
 				fmt.Scanln()
 			case "p":
 				/* pickup command */
+				message = "Direction to pick up from?: "
+				onlyPrint(usrin)
+				os.Stdin.Read(b)
+				tmpwords := string([]byte(b)[0])
+				x,y:=fut.x,fut.y
+				nomove:=false
+				switch tmpwords {
+					case "w":
+						y-=1
+					case "a":
+						x-=1
+					case "s":
+						y+=1
+					case "d":
+						x+=1
+					default:
+						nomove=true
+				}
+				if check(x, y, getChar(x,y)) == false && checkItem(x,y) == false && checkBack(x,y) == false && nomove == false {
+					backpack.add(getChar(x,y))
+					placeRune(x,y,' ',99)
+					message="Picked up item!"
+					onlyPrint(tmpwords)
+				} else {
+					message="Nothing to pick up!"
+					onlyPrint(tmpwords)
+				}
 			case "P":
 				/* put command (from inventory) */
 					message = "Put which item?: "
@@ -941,12 +1015,29 @@ func main() {
 							onlyPrint(tmpwords)
 						} else {
 							if backpack.num > 0 {
-								/* set direction before this point eventually... */
-								/* probably want a checkItem() fxn w/ extended barricades[] for "stuff" (interactables) */
-								if check(fut.x-1, fut.y, char.fillL) == false {
+								message="Direction to place?: "
+								onlyPrint(tmpwords)
+								os.Stdin.Read(b)
+								tmpwords = string([]byte(b)[0])
+								x,y:=fut.x,fut.y
+								nomove:=false
+								switch tmpwords {
+									case "w":
+										y-=1
+									case "a":
+										x-=1
+									case "s":
+										y+=1
+									case "d":
+										x+=1
+									default:
+										nomove=true
+								}
+								/* should also probably save a fill of what the item's rune was placed over */
+								if (check(x, y, getChar(x,y)) == false) && (checkItem(x,y) == false) && (nomove == false) {
 									message="Item placed!"
-									placeRune(fut.x-1,fut.y,backpack.slot[tmpnum-1].icon,99)
-									backpack.Remove(tmpnum-1)
+									placeRune(x,y,backpack.slot[tmpnum-1].icon,99)
+									(&backpack).remove(tmpnum-1)
 									onlyPrint(tmpwords)
 								} else {
 									message="Can't place there!"
