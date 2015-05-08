@@ -103,7 +103,8 @@ func (inv *inventory) remove(num int) {
 /* set item id and icon and fill */
 func (inv *inventory) add(icon rune) {
 	/* perhaps add an else and form of return which states no more space */
-	if num := inv.num; inv.num+1 < inv.size {
+	added=true
+	if num := inv.num; inv.num+1 <= inv.size {
 		inv.num += 1
 		inv.slot[num].icon = icon
 		switch icon {
@@ -112,7 +113,10 @@ func (inv *inventory) add(icon rune) {
 		default:
 			inv.slot[num].id = UNKNOWN
 		}
+	} else {
+		added=false
 	}
+	return
 }
 
 /* basic sprite meta-struct */
@@ -132,7 +136,7 @@ var pos, fut position
 var char fillers
 var plyr statistics
 var backpack inventory
-var debugmode bool = false
+var debugmode, added bool = false, false
 var message string
 
 /*-=1 end variables-=1 */
@@ -998,13 +1002,18 @@ func main() {
 				nomove = true
 			}
 			if check(x, y, datchar) == false && checkObject(x, y) == false && checkBack(x, y) == false && nomove == false {
-				fmt.Printf("Pos Char is: %2d,%2d; '%1c'", x, y, datchar)
-				clearln(23)
-				backpack.add(datchar)
-				/* this could be adjusted from room[] to be original, but... */
-				message = "Picked up item!"
-				placeRune(x, y, ' ', 99)
-				onlyPrint(tmpwords)
+					fmt.Printf("%2d",backpack.num)
+					clearln(2)
+					(&backpack).add(datchar)
+					if added == true {
+						message = "Picked up item!"
+						placeRune(x, y, ' ', 99)
+						onlyPrint(tmpwords)
+					} else {
+						message = "No space left in backpack."
+					}
+					/* this could be adjusted from room[] to be original, but... */
+
 			} else {
 				message = "Nothing to pick up!"
 				onlyPrint(tmpwords)
