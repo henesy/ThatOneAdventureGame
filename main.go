@@ -90,7 +90,7 @@ type inventory struct {
 /* remove item from inventory; num is the actual array position */
 func (inv *inventory) remove(num int) {
 	if num < inv.size {
-		for i:=num;i<inv.size;i+=1 {
+		for i:=num;i<inv.size;i++ {
 				inv.slot[i].icon = inv.slot[i+1].icon
 				inv.slot[i].id = inv.slot[i+1].id
 			}
@@ -102,7 +102,7 @@ func (inv *inventory) remove(num int) {
 func (inv *inventory) add(icon rune) {
 	/* perhaps add an else and form of return which states no more space */
 	if num:=inv.num; inv.num+1 < inv.size {
-		inv.num+=1
+		inv.num++
 		inv.slot[num].icon = icon
 		switch icon {
 			case '*':
@@ -134,19 +134,19 @@ var backpack inventory
 var debugmode bool = false
 var message string
 
-/* -- end variables -- */
+/*-- end variables-- */
 
 /* clears a line of the screen */
 func clearln(extra int) {
-	for i := 0; i < (width - extra); i += 1 {
+	for i := 0; i < (width - extra); i++ {
 		fmt.Print(" ")
 	}
 }
 
 /* clears the entire screen (if full) */
 func clearscrn() {
-	for h := 0; h < height; h += 1 {
-		for i := 0; i < width; i += 1 {
+	for h := 0; h < height; h++ {
+		for i := 0; i < width; i++ {
 			fmt.Print(" ")
 		}
 	}
@@ -154,7 +154,7 @@ func clearscrn() {
 
 /* clear 'num' number of spaces (on demand, limited, clearing) */
 func clearnum(num int) {
-	for i := 0; i < num; i += 1 {
+	for i := 0; i < num; i++ {
 		fmt.Print(" ")
 	}
 }
@@ -166,31 +166,31 @@ func setRoom(num string) {
 	if succ == 1 {
 		fmt.Print("ERROR READING ROOM FILE")
 	}
-	for h := 0; h < 23; h += 1 {
+	for h := 0; h < 23; h++ {
 		curroom[h] = room[h]
 		count = h
 	}
 	/* extract data lines*/
-	count += 1 //23, but line #24
+	count++ //23, but line #24
 	roomdata[0] = room[count]
 	/* MAYBE MAKE roomdata[0] something like POSITION COORDINATES */
 	if roomdata[0] == "Data:" {
-		count += 1 //24, but line #25
+		count++ //24, but line #25
 		/* coordinates */
 		roomdata[1] = room[count]
-		count +=1
+		count++
 		/* number of sprites */
 		roomdata[2] = room[count]
 		num, _ := sc.Atoi(roomdata[2]) //the number 3
 		numsprites = num
-		for i := 3; i < (num + 3); i += 1 { //starting at 3, until we reach 5 (2,3,4)
-			count += 1 //25, but line #26
+		for i := 3; i < (num + 3); i++ { //starting at 3, until we reach 5 (2,3,4)
+			count++ //25, but line #26
 			roomdata[i] = room[count]
 		}
 		/* for the number of sprites, do this for reach sprite:
 		   roomdata[] starts at [2] for being relevant ([0] & [1] being 'Data:'' and '3') */
 		//var buf = make([]int, 5) //account for 3 plyr plus (x,y)
-		for j := 0; j < num; j += 1 {
+		for j := 0; j < num; j++ {
 			str := roomdata[j+3] //starts at [2]
 			newstr := strings.Split(str, ",")
 			sprites[j].f.icon, _ = utf8.DecodeRuneInString(newstr[0])
@@ -201,7 +201,7 @@ func setRoom(num string) {
 			sprites[j].pos.y, _ = sc.Atoi(newstr[5])
 			tmpstr := curroom[sprites[j].pos.y]
 			var char rune
-			for i := 0; len(tmpstr) > 0; i += 1 {
+			for i := 0; len(tmpstr) > 0; i++ {
 				character, size := utf8.DecodeRuneInString(tmpstr)
 				tmpstr = tmpstr[size:]
 				if i == sprites[j].pos.x {
@@ -217,7 +217,7 @@ func setRoom(num string) {
 	}
 
 	str:=curroom[pos.y]
-	for i:=0;i<79;i+=1 {
+	for i:=0;i<79;i++ {
 		character, size := utf8.DecodeRuneInString(str)
 		if i == pos.x {
 			char.fill = character
@@ -237,11 +237,11 @@ func onlyPrint(usrin string) {
 /* prints the curroom[] buf to screen */
 func printRoom() {
 	if height > 24 {
-		for i:=0;i<(height-24);i+=1 {
+		for i:=0;i<(height-24);i++ {
 			clearln(0)
 		}
 	}
-	for i := 0; i < len(curroom); i += 1 {
+	for i := 0; i < len(curroom); i++ {
 		fmt.Printf("%s", curroom[i])
 		/* clearing in case the map doesn't fill the standard 23x80 width */
 		extra := utf8.RuneCountInString(curroom[i])
@@ -270,7 +270,7 @@ func printStats(key string, usrin ...string) {
 func getChar(x, y int)(char rune) {
 	str := curroom[y]
 	var size int
-	for i:=0;i<len(curroom);i+=1 {
+	for i:=0;i<len(curroom);i++ {
 		char, size = utf8.DecodeRuneInString(str)
 		if i == x {
 			break
@@ -282,7 +282,7 @@ func getChar(x, y int)(char rune) {
 
 /* set original position, futures, and fills for all sprites */
 func populateCreeps() {
-	for i := 0; i < numsprites; i += 1 {
+	for i := 0; i < numsprites; i++ {
 		sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].pos.x, sprites[i].pos.y, sprites[i].f.icon, i)
 		sprites[i].fut.x, sprites[i].fut.y = sprites[i].pos.x, sprites[i].pos.y
 	}
@@ -295,7 +295,7 @@ func moveCreeps() {
 	var edgeU, edgeD, edgeL, edgeR bool = false, false, false, false
 
 	/* set initial direction */
-	for i := 0; i < numsprites; i += 1 {
+	for i := 0; i < numsprites; i++ {
 		dirX, dirY := make([]direction, numsprites), make([]direction, numsprites)
 		bufX[i] = sprites[i].fut.x
 		bufY[i] = sprites[i].fut.y
@@ -319,7 +319,7 @@ func moveCreeps() {
 		}
 
 		/* check for icons next to each other via fills */
-		for h := 0; h < numsprites; h += 1 {
+		for h := 0; h < numsprites; h++ {
 			if sprites[i].f.fillU == sprites[h].f.icon && dirY[i] == UP {
 				dirY[i] = DOWN
 			}
@@ -395,7 +395,7 @@ func moveCreeps() {
 		*/
 		/* -!- Might need to add storage for direction -!-*/
 		/* maybe move this segment backwards to be adjusted moreso later as to not move extraneously? */
-		for h := 0; h < numsprites; h += 1 {
+		for h := 0; h < numsprites; h++ {
 			if edgeU == false && edgeR == false {
 				if char:=getChar(sprites[i].fut.x+1,sprites[i].fut.y-1); char == sprites[h].f.icon && dirY[i] == UP {
 					dirY[i] = DOWN
@@ -430,7 +430,7 @@ func moveCreeps() {
 			}
 		}
 
-		for h:=0;h<numsprites;h+=1 {
+		for h:=0;h<numsprites;h++ {
 			altX, altY := sprites[h].fut.x, sprites[h].fut.y
 			x, y := sprites[i].fut.x, sprites[i].fut.y
 			botRx, botRy := sprites[i].fut.x+1, sprites[i].fut.y+1
@@ -600,27 +600,27 @@ func moveCreeps() {
 		/* Translate dirX[i] dirY[i] */
 
 		if dirX[i] == LEFT {
-			sprites[i].fut.x -= 1
+			sprites[i].fut.x--
 			if sprites[i].fut.x < 0 {
-				sprites[i].fut.x += 1
+				sprites[i].fut.x++
 			}
 		} else if dirX[i] == RIGHT {
-			sprites[i].fut.x += 1
+			sprites[i].fut.x++
 			if sprites[i].fut.x > 79 {
-				sprites[i].fut.x -= 1
+				sprites[i].fut.x--
 			}
 		} else {
 			sprites[i].fut.x = sprites[i].fut.x
 		}
 		if dirY[i] == UP {
-			sprites[i].fut.y -= 1
+			sprites[i].fut.y--
 			if sprites[i].fut.y < 0 {
-				sprites[i].fut.y += 1
+				sprites[i].fut.y++
 			}
 		} else if dirY[i] == DOWN {
-			sprites[i].fut.y += 1
+			sprites[i].fut.y++
 			if sprites[i].fut.y > 22 {
-				sprites[i].fut.y -= 1
+				sprites[i].fut.y--
 			}
 		} else {
 			sprites[i].fut.y = sprites[i].fut.y
@@ -639,7 +639,7 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 	str := curroom[y]
 	var newstr string
 
-	for i := 0; len(str) > 0; i += 1 {
+	for i := 0; len(str) > 0; i++ {
 		character, size := utf8.DecodeRuneInString(str)
 		str = str[size:]
 		if i == x {
@@ -665,7 +665,7 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 		fU = '⚠'
 	} else {
 		str = curroom[posU]
-		for i := 0; len(str) > 0; i += 1 {
+		for i := 0; len(str) > 0; i++ {
 			character, size := utf8.DecodeRuneInString(str)
 			str = str[size:]
 			if pic == char.icon || spritenum == 99 {
@@ -684,7 +684,7 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 		fD = '⚠'
 	} else {
 		str = curroom[posD]
-		for i := 0; len(str) > 0; i += 1 {
+		for i := 0; len(str) > 0; i++ {
 			character, size := utf8.DecodeRuneInString(str)
 			str = str[size:]
 			if pic == char.icon || spritenum == 99 {
@@ -703,7 +703,7 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 	if posR > 79 {
 		fR = '⚠'
 	} else {
-		for i := 0; len(str) > 0; i += 1 {
+		for i := 0; len(str) > 0; i++ {
 			character, size := utf8.DecodeRuneInString(str)
 			str = str[size:]
 			if i == posR {
@@ -716,7 +716,7 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 	if posL < 0 {
 		fL = '⚠'
 	} else {
-		for i := 0; len(str) > 0; i += 1 {
+		for i := 0; len(str) > 0; i++ {
 			character, size := utf8.DecodeRuneInString(str)
 			str = str[size:]
 			if i == posL {
@@ -729,14 +729,14 @@ func placeRune(x, y int, pic rune, spritenum int) (filler, fU, fL, fD, fR rune) 
 }
 
 /* checks if the target location contains an interactable item or not */
-func checkItem(x, y int)(occ bool) {
+func checkObject(x, y int)(occ bool) {
 	str:=curroom[y]
 	constructions := []rune{'Ɵ'}
 	blocked := check(x, y, getChar(x,y))
 	if blocked == true {
 		occ=false
 	} else {
-		for i:=0;len(str) > 0;i+=1 {
+		for i:=0;len(str) > 0;i++ {
 			schar, size := utf8.DecodeRuneInString(str)
 			str = str[size:]
 			if i == x {
@@ -754,12 +754,12 @@ func checkItem(x, y int)(occ bool) {
 /* check for background shit */
 func checkBack(x, y int)(occ bool) {
 	str:=curroom[y]
-	constructions := []rune{' ', '░'}
+	constructions := []rune{' ', '░', '▒', '▓', '█', '▄', '▀', '■'}
 	blocked := check(x, y, getChar(x,y))
 	if blocked == true {
 		occ=false
 	} else {
-		for i:=0;len(str) > 0;i+=1 {
+		for i:=0;len(str) > 0;i++ {
 			schar, size := utf8.DecodeRuneInString(str)
 			str = str[size:]
 			if i == x {
@@ -780,7 +780,7 @@ func check(x, y int, aga rune) (occ bool) {
 	/* maybe re-do this to load from sprites[i].f.icon for more goodness */
 	barricades := []rune{'═', '╣', '║', '╗', '╝', '╚', '╔', '╩', '╦', '╠', '╬', '┼', '┘', '┌', '|',
 		'-', '│', '┤', '┐', '└', '┴', '├', '─', '┬', char.icon}
-	for i := 0; len(str) > 0; i += 1 {
+	for i := 0; len(str) > 0; i++ {
 		_, size := utf8.DecodeRuneInString(str)
 		str = str[size:]
 		if i == x {
@@ -792,7 +792,7 @@ func check(x, y int, aga rune) (occ bool) {
 					occ = false
 				}
 			}
-			for i := 0; i < numsprites; i += 1 {
+			for i := 0; i < numsprites; i++ {
 				character := sprites[i].f.icon
 				if aga == character || aga == char.icon {
 					occ = true
@@ -851,34 +851,34 @@ func main() {
 		switch usrin {
 			case "w":
 				if char.fillU != '⚠' && (check(pos.x, pos.y-1, char.fillU) == false) {
-					fut.y -= 1
+					fut.y--
 					if fut.y < 0 {
-						fut.y += 1
+						fut.y++
 					}
 				}
 			case "a":
 				if char.fillL != '⚠' && (check(pos.x-1, pos.y, char.fillL) == false) {
-					fut.x -= 1
+					fut.x--
 					if fut.x < 0 {
-						fut.x += 1
+						fut.x++
 					}
 				}
 			case "s":
 				if char.fillD != '⚠' && (check(pos.x, pos.y+1, char.fillD) == false) {
-					fut.y += 1
+					fut.y++
 					if fut.y > 22 {
-						fut.y -= 1
+						fut.y--
 					}
 				}
 			case "d":
 				if char.fillR != '⚠' && (check(pos.x+1, pos.y, char.fillR) == false) {
-					fut.x += 1
+					fut.x++
 					if fut.x > 79 {
-						fut.x -= 1
+						fut.x--
 					}
 				}
 			case "q":
-				message = "Really quit?: "
+				message = "Really quit? [q]: "
 				onlyPrint(usrin)
 				os.Stdin.Read(b)
 				tmpwords := string([]byte(b)[0])
@@ -915,35 +915,35 @@ func main() {
 				/* read inventory */
 				clearscrn()
 				fmt.Print("╔")
-				for i := 0; i < width-2; i += 1 {
+				for i := 0; i < width-2; i++ {
 					fmt.Print("═")
 				}
 				fmt.Print("╗")
 				fmt.Print("║")
-				for i := 0; i < 33; i += 1 {
+				for i := 0; i < 33; i++ {
 					fmt.Print(" ")
 				}
 				fmt.Print("║ Backpack ║")
-				for i := 0; i < 33; i += 1 {
+				for i := 0; i < 33; i++ {
 					fmt.Print(" ")
 				}
 				fmt.Print("║")
 				fmt.Print("║")
-				for i := 0; i < 33; i += 1 {
+				for i := 0; i < 33; i++ {
 					fmt.Print(" ")
 				}
 				fmt.Print("╚")
-				for i := 0; i < 10; i += 1 {
+				for i := 0; i < 10; i++ {
 					fmt.Print("═")
 				}
 				fmt.Print("╝")
-				for i := 0; i < 33; i += 1 {
+				for i := 0; i < 33; i++ {
 					fmt.Print(" ")
 				}
 				fmt.Print("║")
 				/* body of inventory */
 				h:=0
-				for i := 0; i < height-5; i += 1 {
+				for i := 0; i < height-5; i++ {
 					if h < backpack.num {
 						// get description based on const?
 						str:=backpack.slot[h].getDesc()
@@ -953,7 +953,7 @@ func main() {
 						//fmt.Print(str)
 						clearln(size+2+11)
 						fmt.Print("║")
-						h+=1
+						h++
 					} else {
 						fmt.Print("║")
 						clearln(2)
@@ -962,7 +962,7 @@ func main() {
 				}
 				/* end body of inventory */
 				fmt.Print("╚")
-				for i := 0; i < width-2; i += 1 {
+				for i := 0; i < width-2; i++ {
 					fmt.Print("═")
 				}
 				fmt.Print("╝")
@@ -978,18 +978,19 @@ func main() {
 				nomove:=false
 				switch tmpwords {
 					case "w":
-						y-=1
+						y--
 					case "a":
-						x-=1
+						x--
 					case "s":
-						y+=1
+						y++
 					case "d":
-						x+=1
+						x++
 					default:
 						nomove=true
 				}
-				if check(x, y, getChar(x,y)) == false && checkItem(x,y) == false && checkBack(x,y) == false && nomove == false {
+				if check(x, y, getChar(x,y)) == false && checkObject(x,y) == false && checkBack(x,y) == false && nomove == false {
 					backpack.add(getChar(x,y))
+					/* this could be adjusted from room[] to be original, but... */
 					placeRune(x,y,' ',99)
 					message="Picked up item!"
 					onlyPrint(tmpwords)
@@ -1005,7 +1006,7 @@ func main() {
 					tmpwords := string([]byte(b)[0])
 					tmpnum, err := sc.Atoi(tmpwords)
 					if err == nil {
-						//tmpnum -= 1
+						//tmpnum--
 						//fmt.Print(tmpnum)
 						if tmpnum > backpack.num {
 							message="You don't have that many items."
@@ -1023,18 +1024,18 @@ func main() {
 								nomove:=false
 								switch tmpwords {
 									case "w":
-										y-=1
+										y--
 									case "a":
-										x-=1
+										x--
 									case "s":
-										y+=1
+										y++
 									case "d":
-										x+=1
+										x++
 									default:
 										nomove=true
 								}
 								/* should also probably save a fill of what the item's rune was placed over */
-								if (check(x, y, getChar(x,y)) == false) && (checkItem(x,y) == false) && (nomove == false) {
+								if (check(x, y, getChar(x,y)) == false) && (checkObject(x,y) == false) && (nomove == false) {
 									message="Item placed!"
 									placeRune(x,y,backpack.slot[tmpnum-1].icon,99)
 									(&backpack).remove(tmpnum-1)
@@ -1074,7 +1075,7 @@ func main() {
 						message = "Teleporting down!"
 						num, _ =sc.Atoi(roomnum)
 						if num - 1 > 0 {
-							num-=1
+							num--
 							roomnum = sc.Itoa(num)
 							setRoom(roomnum)
 							first=true
@@ -1086,7 +1087,7 @@ func main() {
 						message = "Teleporting up!"
 						num, _=sc.Atoi(roomnum)
 						if num < numrooms {
-							num+=1
+							num++
 							roomnum = sc.Itoa(num)
 							setRoom(roomnum)
 							first=true
@@ -1109,7 +1110,7 @@ func main() {
 			moveCreeps()
 			creep_move_cnt = 0
 		} else {
-			creep_move_cnt += 1
+			creep_move_cnt++
 		}
 
 		/* print the map and other such things, perhaps make this its own function then goroutine it */

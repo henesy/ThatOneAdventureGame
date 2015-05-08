@@ -6,3 +6,5 @@ Other controls:
 `>`: teleport up on a portal
 `i`: display inventory
 `C`: clear the screen
+`p`: pickup an item
+`P`: place an item
