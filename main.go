@@ -299,6 +299,8 @@ func moveCreeps() {
 	bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
 	var edgeU, edgeD, edgeL, edgeR bool = false, false, false, false
 
+	/* add a refresh of directional fills to bring them up to date, new function? */
+
 	/* set initial direction */
 	for i := 0; i < numsprites; i += 1 {
 		dirX, dirY := make([]direction, numsprites), make([]direction, numsprites)
@@ -633,6 +635,8 @@ func moveCreeps() {
 
 		sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].fut.x, sprites[i].fut.y, sprites[i].f.icon, i)
 		sprites[i].pos.x, sprites[i].pos.y = sprites[i].fut.x, sprites[i].fut.y
+		fmt.Printf("%d:%c,%c,%c,%c,%c", i, sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillD, sprites[i].f.fillL, sprites[i].f.fillR)
+		clearln(11)
 	}
 }
 

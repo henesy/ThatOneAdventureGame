@@ -1,6 +1,7 @@
 Technical:
 perhaps condense the player variables into one stack (but clutter?)
 maybe add more pointers?
+convert copious for loops and array shenanigans into slices and slice tricks (https://github.com/golang/go/wiki/SliceTricks)
 
 Functional:
 random map generator (separate program?)
