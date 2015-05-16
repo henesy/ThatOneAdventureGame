@@ -125,9 +125,11 @@ type sprite struct {
 	fut position
 	f   fillers
 	s   statistics
+	mv	int
 }
 
-var height, width, numrooms int /* terminal height/width; number of room files (rooms) */
+/* terminal height/width; number of room files (rooms); creep move tracker */
+var height, width, numrooms int
 var curroom = make([]string, 23)
 var roomdata = make([]string, 23)
 var numsprites int
@@ -299,8 +301,6 @@ func moveCreeps() {
 	bufX, bufY := make([]int, numsprites+1), make([]int, numsprites+1)
 	var edgeU, edgeD, edgeL, edgeR bool = false, false, false, false
 
-	/* add a refresh of directional fills to bring them up to date, new function? */
-
 	/* set initial direction */
 	for i := 0; i < numsprites; i += 1 {
 		dirX, dirY := make([]direction, numsprites), make([]direction, numsprites)
@@ -392,15 +392,6 @@ func moveCreeps() {
 			edgeD = true
 		}
 
-		/* -!- Add a check for upper right or upper left (diagonals) -!- */
-		/*
-		   get coords -> check x+1,y+1;x-1,y-1;x+1,y-1;x-1,y+1 ->
-		   check against sprites[i].f.icon -> if x,y == [].icon ->
-		   determine which sprite x,y is (sprites[i].p.x/y == ) -> note sprite num ->
-		   check sprite[num].fut if num < sprites[i] (not sure if order is necessary
-		   if all get checked) -> change dir to not move if num.fut.x/y matches dir=""
-		*/
-		/* -!- Might need to add storage for direction -!-*/
 		/* maybe move this segment backwards to be adjusted moreso later as to not move extraneously? */
 		for h := 0; h < numsprites; h += 1 {
 			if edgeU == false && edgeR == false {
@@ -513,7 +504,6 @@ func moveCreeps() {
 			}
 
 			if num == sprites[i].fut.x {
-				dirX[i] = dirX[i]
 				xCanc = false
 			} else if res < 4 {
 				//dirX[i] = NONE
@@ -531,7 +521,6 @@ func moveCreeps() {
 			}
 
 			if num == sprites[i].fut.y {
-				dirY[i] = dirY[i]
 				yCanc = false
 			} else if res < 4 {
 				//dirY[i] = NONE
@@ -542,10 +531,8 @@ func moveCreeps() {
 			dirX[i] = NONE
 			dirY[i] = NONE
 		} else if xCanc == true && yCanc == false {
-			dirY[i] = dirY[i]
 			dirX[i] = NONE
 		} else if xCanc == false && yCanc == true {
-			dirX[i] = dirX[i]
 			dirY[i] = NONE
 		}
 
@@ -591,7 +578,17 @@ func moveCreeps() {
 			dirX[i] = NONE
 		}
 
-		/* Pick a direction */
+		/* Don't move if last move was < 4 moves ago */
+		/* maybe convert this into movement profiles due to "personality" eventually? */
+		if sprites[i].mv >= 3 {
+			sprites[i].mv = 0
+		} else {
+			dirX[i] = NONE
+			dirY[i] = NONE
+			sprites[i].mv += 1
+		}
+
+		/** Pick a direction **/
 
 		if rn := svi.Random(0, 2); dirY[i] != NONE && dirX[i] != NONE {
 			if rn == 0 {
@@ -613,9 +610,8 @@ func moveCreeps() {
 			if sprites[i].fut.x > 79 {
 				sprites[i].fut.x -= 1
 			}
-		} else {
-			sprites[i].fut.x = sprites[i].fut.x
 		}
+
 		if dirY[i] == UP {
 			sprites[i].fut.y -= 1
 			if sprites[i].fut.y < 0 {
@@ -626,12 +622,7 @@ func moveCreeps() {
 			if sprites[i].fut.y > 22 {
 				sprites[i].fut.y -= 1
 			}
-		} else {
-			sprites[i].fut.y = sprites[i].fut.y
 		}
-
-		//fmt.Printf("Num: %d;%2d,%2d", i, sprites[i].fut.x, sprites[i].fut.y)
-		//clearln(12)
 
 		sprites[i].f.fill, sprites[i].f.fillU, sprites[i].f.fillL, sprites[i].f.fillD, sprites[i].f.fillR = placeRune(sprites[i].fut.x, sprites[i].fut.y, sprites[i].f.icon, i)
 		sprites[i].pos.x, sprites[i].pos.y = sprites[i].fut.x, sprites[i].fut.y
@@ -849,7 +840,6 @@ func main() {
 
 	/* begin game loop */
 	var first bool = true
-	var creep_move_cnt int = 0
 	for playing == true {
 		if first == false {
 			os.Stdin.Read(b)
@@ -1135,13 +1125,7 @@ func main() {
 		/* perform movement of sprites and player */
 		placeRune(pos.x, pos.y, char.fill, 99)
 		char.fill, char.fillU, char.fillL, char.fillD, char.fillR = placeRune(fut.x, fut.y, char.icon, 99)
-		/* creeps move every 4 turns */
-		if creep_move_cnt == 3 {
-			moveCreeps()
-			creep_move_cnt = 0
-		} else {
-			creep_move_cnt += 1
-		}
+		moveCreeps()
 
 		/* print the map and other such things, perhaps make this its own function then goroutine it */
 		printRoom()

@@ -1,3 +1,2 @@
-if door is closed after being open in front of a creep the creep may move through the door
-
+### Bugs found should be filed as Issues on GitHub
 
