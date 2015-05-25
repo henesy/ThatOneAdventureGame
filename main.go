@@ -55,6 +55,7 @@ type statistics struct {
 	hlth int
 	atk  int
 	dfs  int
+	prof rune
 }
 
 /* item struct, stats then value */
@@ -186,6 +187,7 @@ func setRoom(num string) {
 		/* coordinates */
 		roomdata[1] = room[count]
 		count += 1
+
 		/* number of sprites */
 		roomdata[2] = room[count]
 		num, _ := sc.Atoi(roomdata[2]) //the number 3
@@ -206,6 +208,8 @@ func setRoom(num string) {
 			sprites[j].s.dfs, _ = sc.Atoi(newstr[3])
 			sprites[j].pos.x, _ = sc.Atoi(newstr[4])
 			sprites[j].pos.y, _ = sc.Atoi(newstr[5])
+			nr, _ := utf8.DecodeRuneInString(newstr[6])
+			sprites[j].s.prof = nr
 			tmpstr := curroom[sprites[j].pos.y]
 			var char rune
 			for i := 0; len(tmpstr) > 0; i += 1 {
@@ -1119,6 +1123,9 @@ func main() {
 			} else {
 				message = "You can't teleport here."
 			}
+		case "c":
+			//future character profile screen
+			message = "Profile of S[1]: " + string(sprites[1].s.prof)
 		default:
 		}
 
