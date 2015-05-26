@@ -329,6 +329,12 @@ func moveCreeps() {
 			dirY[i] = NONE
 		}
 
+		/* null movement if sprite profile is passive */
+		if sprites[i].s.prof == 'p' {
+			dirX[i] = NONE
+			dirY[i] = NONE
+		}
+
 		/* check for icons next to each other via fills */
 		for h := 0; h < numsprites; h += 1 {
 			if sprites[i].f.fillU == sprites[h].f.icon && dirY[i] == UP {
@@ -583,8 +589,15 @@ func moveCreeps() {
 		}
 
 		/* Don't move if last move was < 4 moves ago */
-		/* maybe convert this into movement profiles due to "personality" eventually? */
-		if sprites[i].mv >= 3 {
+		moveWait := 1
+		if sprites[i].s.prof == 'a' {
+			moveWait = 3
+		} else {
+			//friendlies should move once every other turn
+			moveWait = 1
+		}
+
+		if sprites[i].mv >= moveWait {
 			sprites[i].mv = 0
 		} else {
 			dirX[i] = NONE
